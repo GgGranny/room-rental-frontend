@@ -33,7 +33,7 @@ export default function Signup() {
                     src="/login-home-image.jpg"
                     alt="login image"
                     fill={true}
-                    loading="lazy"
+                    loading="eager"
                 />
             </div>
             <div className="right-container max-w-full w-1/2 px-20 h-full flex items-center justify-center">
