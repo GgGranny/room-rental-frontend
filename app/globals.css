@@ -10,12 +10,16 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
+  --color-primary-light: var(--primary-light);
+  --color-primary-dark: var(--primary-dark);
+};
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #F8F9FF;
     --foreground: #000000;
+    --primary-light:#4f39f6; 
+    --primary-dark: #1E3A8A;
   }
 }
 
@@ -24,3 +28,5 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@variant dark (&:where(.dark, .dark *));
