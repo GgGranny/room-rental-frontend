@@ -2,6 +2,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter, Roboto } from "next/font/google";
 import "./globals.css";
+import { Providers } from "./Providers";
+import { Toaster } from "sonner";
+import { ThemeProvider } from "@/app/components/ThemeProvider";
+import Lenis  from "lenis";
+import SmoothScrolling from "./components/SmoothScrolling";
 
 const roboto = Roboto({
   subsets: ['latin'],
@@ -34,10 +39,18 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.className} ${geistMono.variable} ${roboto.className} h-full antialiased tracking-wider`}
+      className={`${inter.className} ${geistMono.variable} h-full antialiased tracking-wider`}
+      suppressHydrationWarning={true}
     >
       <body className="min-h-full flex flex-col">
-        {children}
+        <SmoothScrolling>
+          <Providers>
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+              {children}
+            </ThemeProvider>
+          </Providers>
+        </SmoothScrolling>
+        <Toaster position="top-right" richColors={true} />
       </body>
     </html>
   );
