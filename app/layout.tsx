@@ -1,6 +1,6 @@
 
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Geist, Geist_Mono, Inter, Roboto } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./Providers";
 import { Toaster } from "sonner";
@@ -8,6 +8,10 @@ import { ThemeProvider } from "@/app/components/ThemeProvider";
 import Lenis  from "lenis";
 import SmoothScrolling from "./components/SmoothScrolling";
 
+const roboto = Roboto({
+  subsets: ['latin'],
+  variable: "--font-roboto-sans"
+})
 const inter = Inter({
   subsets: ['latin'], display: 'swap'
 });
