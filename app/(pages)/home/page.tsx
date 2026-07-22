@@ -12,8 +12,8 @@ import {
     Car
 } from "lucide-react";
 import { filterIcons } from "@/app/utils/FilterIcons";
-import Card from "@/app/components/ui/Card";
-import Hero from "@/app/components/Hero";
+import Card from "@/components/myui/Card";
+import Hero from "@/components/Hero";
 
 // Mock Data matching image_55dc69.jpg exactly
 const properties = [

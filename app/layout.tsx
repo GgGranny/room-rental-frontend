@@ -1,19 +1,27 @@
 
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter, Roboto } from "next/font/google";
+import { Geist, Geist_Mono, Inter, Roboto, Inter_Tight } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./Providers";
 import { Toaster } from "sonner";
-import { ThemeProvider } from "@/app/components/ThemeProvider";
-import Lenis  from "lenis";
-import SmoothScrolling from "./components/SmoothScrolling";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import SmoothScrolling from "@/components/SmoothScrolling";
+
+
+const interTight = Inter_Tight({
+  subsets: ['latin'],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-inter-tight",
+});
 
 const roboto = Roboto({
   subsets: ['latin'],
   variable: "--font-roboto-sans"
 })
 const inter = Inter({
-  subsets: ['latin'], display: 'swap'
+  subsets: ['latin'],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-inter",
 });
 
 const geistSans = Geist({
@@ -39,7 +47,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.className} ${geistMono.variable} h-full antialiased tracking-wider`}
+      className={`${inter.className} ${interTight.variable} h-full antialiased tracking-wider`}
       suppressHydrationWarning={true}
     >
       <body className="min-h-full flex flex-col">

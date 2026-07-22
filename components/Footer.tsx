@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Mail, ArrowRight, Globe } from "lucide-react";
-import { socialIcons } from "../utils/SocialIcons";
+import { socialIcons } from "@/app/utils/SocialIcons";
 
 export default function Footer() {
     const [email, setEmail] = useState("");

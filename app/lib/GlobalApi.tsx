@@ -1,4 +1,3 @@
-
 const BBASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1';
 
 type RequestOptions = {
@@ -9,18 +8,19 @@ type RequestOptions = {
 
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     const { method = 'GET', body, headers = {} } = options;
-    // const token = localStorage.getItem('token');
-    // if (token) {
-    //     headers['Authorization'] = `Bearer ${token}`;
-    // }
+
+    const isFormData = body instanceof FormData;
+
     const config: RequestInit = {
         method,
         headers: {
-            'Content-type': 'application/json',
+            ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
             ...headers,
         },
         credentials: "include",
-        ...(body ? { body: JSON.stringify(body) } : {}),
+        ...(body
+            ? { body: isFormData ? (body as FormData) : JSON.stringify(body) }
+            : {}),
     }
 
     const rs = await fetch(`${BBASE_URL}/${endpoint}`, config);
@@ -40,7 +40,6 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     }
     return await rs.json();
 }
-
 
 export const apiClient = {
     get: <T,>(url: string, headers?: Record<string, string>) => request<T>(url, { method: 'GET', headers }),
