@@ -106,7 +106,7 @@ const propertyStatusStyles: Record<string, string> = {
 export default function PropertyDetailPage() {
     const { id } = useParams<{ id: string }>();
     const { data: response, isLoading, isError, error } = useGetPropertyById(id);
-    const property = response?.data;
+    const property = (response as any)?.data as PropertyDetail | undefined;
 
     if (isLoading) {
         return (
@@ -133,7 +133,7 @@ export default function PropertyDetailPage() {
         );
     }
 
-    const rooms = property.rooms ?? [];
+    const rooms = property?.rooms ?? [];
     const availableCount = rooms.filter((r) => r.status === "AVAILABLE").length;
 
     return (
@@ -198,6 +198,7 @@ export default function PropertyDetailPage() {
                         </section>
                     )}
 
+
                     {/* Rooms */}
                     <section className="rounded-2xl border border-slate-200/60 dark:border-slate-850 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
                         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
@@ -210,7 +211,7 @@ export default function PropertyDetailPage() {
                                 </p>
                             </div>
                             <Link
-                                href={`/dashboard/landlord/properties/${property.id}/rooms/add`}
+                                href={`/landlord/properties/${property.id}/rooms/new`}
                                 className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-3.5 rounded-lg transition-all"
                             >
                                 <Plus className="w-3.5 h-3.5 stroke-[3]" />

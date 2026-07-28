@@ -13,6 +13,7 @@ import {
 import Link from "next/link";
 import { ChangeEvent, FormEvent, useState } from "react";
 import { toast } from "sonner";
+import Map from "@/components/Map";
 
 export enum PropertyStatus {
     ACTIVE = "ACTIVE",
@@ -46,6 +47,7 @@ const initialFormState: PropertyRequest = {
 
 export default function AddPropertyPage() {
     const [form, setForm] = useState<PropertyRequest>(initialFormState);
+    const [selectedPosition, setSelectedPosition] = useState<{ lat: number; lng: number }>({ lat: 7.2906, lng: 80.6337 });
     const [isSaved, setIsSaved] = useState(false);
     const [file, setFile] = useState<File | null>(null);
     const propertyMutation = useCreateProperty();
@@ -264,6 +266,39 @@ export default function AddPropertyPage() {
                                     }
                                     className="h-11 rounded-lg border px-3 text-sm md:col-span-2"
                                 />
+                            </div>
+
+                            <div className="mt-6 space-y-4">
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <label className="flex flex-col gap-2">
+                                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                            Latitude
+                                        </span>
+                                        <input
+                                            readOnly
+                                            value={selectedPosition.lat.toFixed(6)}
+                                            className="h-11 rounded-lg border bg-slate-50 px-3 text-sm text-slate-700 outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                                        />
+                                    </label>
+                                    <label className="flex flex-col gap-2">
+                                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                            Longitude
+                                        </span>
+                                        <input
+                                            readOnly
+                                            value={selectedPosition.lng.toFixed(6)}
+                                            className="h-11 rounded-lg border bg-slate-50 px-3 text-sm text-slate-700 outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                                        />
+                                    </label>
+                                </div>
+
+                                <div className="h-[320px] overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900">
+                                    <Map
+                                        lat={selectedPosition.lat}
+                                        lng={selectedPosition.lng}
+                                        onPositionChange={(pos) => setSelectedPosition(pos)}
+                                    />
+                                </div>
                             </div>
                         </section>
 

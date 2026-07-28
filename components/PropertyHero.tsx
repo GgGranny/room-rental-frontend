@@ -25,7 +25,7 @@ export function PropertyHero({
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="relative aspect-[16/9] w-full overflow-hidden rounded-[18px] border border-[#2C2C33] group"
+                className="group relative aspect-[16/9] w-full overflow-hidden rounded-[18px] border border-slate-200 transition-colors duration-300 dark:border-[#2C2C33]"
             >
                 <Image
                     src={heroImage}
@@ -35,7 +35,7 @@ export function PropertyHero({
                     sizes="(max-width: 1024px) 100vw, 65vw"
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                <button className="absolute bottom-4 right-4 flex items-center gap-2 rounded-lg border border-[#2C2C33] bg-[#0B0B0F]/80 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md transition-all hover:bg-[#0B0B0F]">
+                <button className="absolute bottom-4 right-4 flex items-center gap-2 rounded-lg border border-slate-300 bg-white/80 px-3 py-1.5 text-xs font-medium text-slate-800 backdrop-blur-md transition-all hover:bg-white dark:border-[#2C2C33] dark:bg-[#0B0B0F]/80 dark:text-white dark:hover:bg-[#0B0B0F]">
                     <Images className="h-3.5 w-3.5" />
                     <span>View all photos</span>
                 </button>
@@ -43,16 +43,16 @@ export function PropertyHero({
 
             <div className="space-y-2">
                 <div className="flex items-center gap-2 text-xs font-semibold tracking-wider">
-                    <span className="rounded bg-[#1D1D23] px-2 py-0.5 text-white border border-[#2C2C33]">
+                    <span className="rounded border border-slate-200 bg-slate-100 px-2 py-0.5 text-slate-800 dark:border-[#2C2C33] dark:bg-[#1D1D23] dark:text-white">
                         {badge}
                     </span>
-                    <span className="text-[#9CA3AF]">{listingCode}</span>
+                    <span className="text-slate-500 dark:text-[#9CA3AF]">{listingCode}</span>
                 </div>
-                <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+                <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl lg:text-5xl">
                     {title}
                 </h1>
-                <div className="flex items-center gap-1.5 text-sm text-[#9CA3AF]">
-                    <MapPin className="h-4 w-4 text-[#9CA3AF] shrink-0" />
+                <div className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-[#9CA3AF]">
+                    <MapPin className="h-4 w-4 shrink-0 text-slate-500 dark:text-[#9CA3AF]" />
                     <span>{location}</span>
                 </div>
             </div>

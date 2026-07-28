@@ -16,7 +16,7 @@ export function PropertyGallery({ images }: PropertyGalleryProps) {
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: idx * 0.1 }}
-                    className="relative h-[160px] sm:h-[185px] w-full overflow-hidden rounded-[18px] border border-[#2C2C33] group"
+                    className="group relative h-[160px] w-full overflow-hidden rounded-[18px] border border-slate-200 transition-colors duration-300 dark:border-[#2C2C33] sm:h-[185px]"
                 >
                     <Image
                         src={img}
