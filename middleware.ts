@@ -6,7 +6,7 @@ const ROLE_ROUTES: Record<string, string[]> = {
     ROLE_USER: ["/home", "/booking"],
 };
 
-const PUBLIC_PATHS = ["/login", "/signup", "/unauthorized", "/home"];
+const PUBLIC_PATHS = ["/login", "/signup", "/unauthorized", "/home", "/forgot-password", "/reset-password", "/verify-email", "/complete-profile"];
 
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;

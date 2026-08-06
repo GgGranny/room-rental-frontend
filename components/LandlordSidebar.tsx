@@ -55,10 +55,10 @@ export default function LandlordSidebar({ className = "", collapsed, setCollapse
                 { label: "Categories", icon: Tags, href: "/landlord/properties/categories" },
             ],
         },
-        { label: "Bookings", icon: Calendar, href: "/dashboard/landlord/bookings" },
-        { label: "Analytics", icon: BarChart3, href: "/dashboard/landlord/analytics" },
-        { label: "Messages", icon: MessageSquare, href: "/dashboard/landlord/messages" },
-        { label: "Settings", icon: Settings, href: "/dashboard/landlord/settings" },
+        { label: "Bookings", icon: Calendar, href: "/landlord/bookings" },
+        { label: "Analytics", icon: BarChart3, href: "/landlord/analytics" },
+        { label: "Messages", icon: MessageSquare, href: "/landlord/messages" },
+        { label: "Settings", icon: Settings, href: "/settings/profile" },
     ];
 
     // Accurate sub-route and strict match evaluator
@@ -183,7 +183,7 @@ export default function LandlordSidebar({ className = "", collapsed, setCollapse
                         <Plus className="w-5 h-5 stroke-[2.5]" />
                     </button>
                 ) : (
-                    <button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2.5 px-4 rounded-xl shadow-md shadow-indigo-600/10 transition-colors flex items-center justify-center gap-2">
+                    <button onClick={() => router.push("/landlord/properties/add")} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2.5 px-4 rounded-xl shadow-md shadow-indigo-600/10 transition-colors flex items-center justify-center gap-2">
                         <Plus className="w-4 h-4 stroke-[2.5]" />
                         <span className="whitespace-nowrap">List New Property</span>
                     </button>

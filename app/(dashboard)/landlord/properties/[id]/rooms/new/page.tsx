@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Building2, CheckCircle2, CircleDollarSign, House, MapPin, Sparkles, Users } from 'lucide-react';
+import { ArrowLeft, Building2, CheckCircle2, CircleDollarSign, House, MapPin, Sparkles } from 'lucide-react';
 import { useSaveRoom } from '@/app/hooks/useRoom';
 
 const Map = dynamic(() => import('@/components/Map'), { ssr: false });
@@ -57,7 +57,6 @@ export default function NewRoomPage() {
     const [step, setStep] = useState(0);
     const [error, setError] = useState('');
     const [selectedImages, setSelectedImages] = useState<File[]>([]);
-    const [origin, setOrigin] = useState<{ lat: number; lng: number } | null>(null);
     const [selectedPosition, setSelectedPosition] = useState<{ lat: number; lng: number }>({ lat: 7.2906, lng: 80.6337 });
     const { mutate, isPending } = useSaveRoom();
 
@@ -93,8 +92,8 @@ export default function NewRoomPage() {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const pos = { lat: position.coords.latitude, lng: position.coords.longitude };
-                    setOrigin(pos);
                     setSelectedPosition(pos);
+                    setForm((current) => ({ ...current, latitude: String(pos.lat), longitude: String(pos.lng) }));
                 },
                 (error) => {
                     console.error('Error or permission denied:', error.message);
@@ -104,8 +103,12 @@ export default function NewRoomPage() {
     }, []);
 
     const handleNext = () => {
-        if (step === 0 && (!form.roomTitle.trim() || !form.location.trim() || !form.price)) {
-            setError('Please provide a room title, location and price before continuing.');
+        if (step === 0 && (!form.roomTitle.trim() || !form.price)) {
+            setError('Please provide a room title and price before continuing.');
+            return;
+        }
+        if (step === 1 && !form.location.trim()) {
+            setError('Choose the room location from the map before continuing.');
             return;
         }
 
@@ -257,7 +260,7 @@ export default function NewRoomPage() {
 
                                     <div>
                                         <label className="mb-2 block text-sm font-semibold">Location</label>
-                                        <input name="location" value={form.location} onChange={handleChange} placeholder="Kandy, Sri Lanka" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none ring-0 focus:border-indigo-400 dark:border-slate-800 dark:bg-slate-950" required />
+                                        <input value={form.location || 'Select a point on the map'} readOnly placeholder="Select a point on the map" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 outline-none dark:border-slate-800 dark:bg-slate-950" />
                                     </div>
 
                                     <div>
@@ -287,10 +290,10 @@ export default function NewRoomPage() {
                             {step === 1 && (
                                 <div className="grid gap-5 md:grid-cols-2">
                                     <div className="md:col-span-2">
-                                        <label className="mb-2 block text-sm font-semibold">Address</label>
+                                        <label className="mb-2 block text-sm font-semibold">Selected address</label>
                                         <div className="relative">
                                             <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                                            <input name="address" value={form.address} onChange={handleChange} placeholder="No. 12, Temple Road" className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm outline-none ring-0 focus:border-indigo-400 dark:border-slate-800 dark:bg-slate-950" />
+                                            <input value={form.address || 'Search, click, or drag the map marker'} readOnly className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-600 outline-none dark:border-slate-800 dark:bg-slate-950" />
                                         </div>
                                     </div>
 
@@ -306,22 +309,13 @@ export default function NewRoomPage() {
 
                                     <div className="md:col-span-2">
                                         <label className="mb-2 block text-sm font-semibold">Select location on map</label>
-                                        {origin ? (
-                                            <div className="h-80 overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900">
-                                                <Map
-                                                    lat={selectedPosition.lat}
-                                                    lng={selectedPosition.lng}
-                                                    onPositionChange={(pos) => {
-                                                        setSelectedPosition(pos);
-                                                    }}
-                                                    origin={origin}
-                                                />
-                                            </div>
-                                        ) : (
-                                            <div className="flex min-h-40 items-center justify-center rounded-3xl border border-slate-200 bg-slate-50 px-4 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
-                                                Please allow location access so the map can center on your current position and select the room location.
-                                            </div>
-                                        )}
+                                        <div className="h-80 overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900">
+                                            <Map lat={selectedPosition.lat} lng={selectedPosition.lng} searchable onLocationChange={({ lat, lng, address }) => {
+                                                setSelectedPosition({ lat, lng });
+                                                setForm((current) => ({ ...current, location: address, address, latitude: String(lat), longitude: String(lng) }));
+                                            }} />
+                                        </div>
+                                        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Search for an address, click the map, or drag the pin. The address and coordinates update automatically.</p>
                                     </div>
                                 </div>
                             )}

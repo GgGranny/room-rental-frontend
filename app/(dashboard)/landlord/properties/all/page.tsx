@@ -16,13 +16,16 @@ import {
     X,
 } from "lucide-react";
 import { useGetAllProperty } from "@/app/hooks/useProperty";
+import { useDeleteProperty } from "@/app/hooks/useProperty";
+import { toast } from "sonner";
 
 export default function PropertiesPage() {
     const [query, setQuery] = useState("");
     const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
     const { data: response, isLoading, isError, error } = useGetAllProperty();
+    const deleteProperty = useDeleteProperty();
 
-    const properties = response?.data ?? [];
+    const properties: any[] = response?.data ?? [];
 
     const filtered = properties.filter(
         (p) =>
@@ -39,9 +42,15 @@ export default function PropertiesPage() {
         INACTIVE: "bg-slate-100 text-slate-500 border-slate-200",
     };
 
-    const handleDelete = () => {
-        // TODO: wire up to your delete mutation, e.g. deletePropertyMutation.mutate(deleteTarget.id)
-        setDeleteTarget(null);
+    const handleDelete = async () => {
+        if (!deleteTarget) return;
+        try {
+            await deleteProperty.mutateAsync(deleteTarget.id);
+            toast.success("Property deleted successfully");
+            setDeleteTarget(null);
+        } catch (deleteError) {
+            toast.error(deleteError instanceof Error ? deleteError.message : "Unable to delete property");
+        }
     };
 
     return (
@@ -58,7 +67,7 @@ export default function PropertiesPage() {
                 </div>
 
                 <Link
-                    href="/dashboard/landlord/properties/add"
+                    href="/landlord/properties/add"
                     className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-md shadow-indigo-600/10 transition-all"
                 >
                     <Plus className="w-4 h-4 stroke-[3]" />
@@ -141,7 +150,7 @@ export default function PropertiesPage() {
                             >
                                 {/* Property (thumbnail + name) */}
                                 <Link
-                                    href={`/dashboard/landlord/properties/${property.id}`}
+                                    href={`/landlord/properties/${property.id}`}
                                     className="flex items-center gap-3 min-w-0"
                                 >
                                     <div className="h-11 w-11 shrink-0 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-800">
@@ -259,9 +268,10 @@ export default function PropertiesPage() {
                             <button
                                 type="button"
                                 onClick={handleDelete}
+                                disabled={deleteProperty.isPending}
                                 className="h-10 rounded-lg bg-rose-600 hover:bg-rose-700 text-xs font-bold text-white transition-colors"
                             >
-                                Delete
+                                {deleteProperty.isPending ? "Deleting..." : "Delete"}
                             </button>
                         </div>
                     </div>

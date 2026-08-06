@@ -140,7 +140,7 @@ export default function PropertyDetailPage() {
         <div className="space-y-6">
             {/* Back link */}
             <Link
-                href="/dashboard/landlord/properties"
+                href="/landlord/properties/all"
                 className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-indigo-600"
             >
                 <ArrowLeft className="h-4 w-4" />
@@ -158,7 +158,7 @@ export default function PropertyDetailPage() {
 
                 <div className="absolute top-4 right-4">
                     <Link
-                        href={`/dashboard/landlord/properties/${property.id}/edit`}
+                        href={`/landlord/properties/${property.id}/edit`}
                         className="inline-flex items-center gap-2 bg-white/90 hover:bg-white text-slate-700 text-xs font-bold py-2 px-3.5 rounded-lg backdrop-blur transition-all"
                     >
                         <Pencil className="w-3.5 h-3.5" />

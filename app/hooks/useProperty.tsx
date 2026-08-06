@@ -36,3 +36,22 @@ export function useGetPropertyById(id: string) {
         enabled: !!id
     })
 }
+
+export function useDeleteProperty() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => PropertyService.deleteProperty(id),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: [PROPERTY_KEY] }),
+    });
+}
+
+export function useUpdateProperty() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, body }: { id: string; body: FormData }) => PropertyService.updateProperty(id, body),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: [PROPERTY_KEY] });
+            queryClient.invalidateQueries({ queryKey: [PROPERTY_KEY, variables.id] });
+        },
+    });
+}

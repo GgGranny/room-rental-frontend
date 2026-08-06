@@ -66,16 +66,20 @@ export default function AddPropertyPage() {
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        const landlordId = localStorage.getItem("landlordId");
+        if (!landlordId) {
+            toast.error("Your landlord profile is not available. Please sign in again.");
+            return;
+        }
         const propertyData: any = {
             ...form,
-            landlordId: localStorage.getItem("landlordId") as string
+            landlordId,
         }
         const formData = new FormData();
         formData.append("propertyData", JSON.stringify(propertyData));
-        formData.append("propertyThumbnail", file as File);
+        if (file) formData.append("propertyThumbnail", file);
         try {
-            console.log(form);
-            const data = await propertyMutation.mutate(formData);
+            await propertyMutation.mutateAsync(formData);
             setIsSaved(true);
             toast.success("Property Saved Successfully");
         } catch (error) {
@@ -101,7 +105,7 @@ export default function AddPropertyPage() {
                 <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 dark:border-slate-800 md:flex-row md:items-center md:justify-between">
                     <div>
                         <Link
-                            href="/dashboard/landlord/properties"
+                        href="/landlord/properties/all"
                             className="mb-3 inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-indigo-600"
                         >
                             <ArrowLeft className="h-4 w-4" />

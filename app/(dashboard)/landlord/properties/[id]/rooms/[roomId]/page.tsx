@@ -1,93 +1,29 @@
 "use client";
 
-import { PropertyHero } from "@/components/PropertyHero";
-import { PropertyGallery } from "@/components/PropertyGallary";
-import { PropertyStats } from "@/components/PropertyStatus";
-import { FacilitiesCard } from "@/components/PropertiesFacilities";
-import { HouseProtocols } from "@/components/HouseProtocols";
-import { AgentCard } from "@/components/AgentCard";
-import { MapCard } from "@/components/MapCard";
-import { Demographics } from "@/components/Demographic";
-import { BookingCard } from "@/components/BookingCard";
-import { MOCK_PROPERTY_DATA } from "@/app/lib/PropertyConstants";
-import { useGetRoomById } from "@/app/hooks/useRoom";
-import { useMemo } from "react";
-import { useParams } from "next/navigation";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft, ImageOff, Loader2, MapPin, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { useDeleteRoom, useGetRoomById, useUpdateRoomStatus } from "@/app/hooks/useRoom";
 
-export default function PropertyPage() {
-    const params = useParams();
-    const roomId = params?.roomId as string | undefined;
+const Map = dynamic(() => import("@/components/Map"), { ssr: false });
+const statuses = ["AVAILABLE", "BOOKED", "MAINTENANCE", "UNAVAILABLE"];
+
+export default function RoomDetailPage() {
+    const { id, roomId } = useParams<{ id: string; roomId: string }>();
+    const router = useRouter();
     const { data: room, isLoading, isError } = useGetRoomById(roomId);
-
-    const data = useMemo(() => {
-        if (!room) return MOCK_PROPERTY_DATA;
-
-        return {
-            heroImage: room.imageUrls?.[0] || MOCK_PROPERTY_DATA.heroImage,
-            badge: room.status || MOCK_PROPERTY_DATA.badge,
-            listingCode: room.propertyId || MOCK_PROPERTY_DATA.id,
-            title: room.roomTitle || MOCK_PROPERTY_DATA.title,
-            location: [room.city, room.district, room.province].filter(Boolean).join(', ') || room.address || MOCK_PROPERTY_DATA.location,
-            galleryImages: room.imageUrls && room.imageUrls.length ? room.imageUrls : MOCK_PROPERTY_DATA.galleryImages,
-            stats: {
-                roomType: room.roomType || MOCK_PROPERTY_DATA.stats.roomType,
-                floorLevel: room.floorNumber ? `${room.floorNumber} th` : MOCK_PROPERTY_DATA.stats.floorLevel,
-                totalUnits: room.totalRooms ? String(room.totalRooms).padStart(2, '0') : MOCK_PROPERTY_DATA.stats.totalUnits,
-                dimensions: room.dimensions || MOCK_PROPERTY_DATA.stats.dimensions,
-            },
-            facilities: (room.facilities || MOCK_PROPERTY_DATA.facilities).map((f: any) => (typeof f === 'string' ? { icon: 'Check', label: f } : f)),
-            protocols: (room.rules || MOCK_PROPERTY_DATA.protocols).map((r: any) => (typeof r === 'string' ? { icon: 'Info', label: r } : r)),
-            agent: room.agent || MOCK_PROPERTY_DATA.agent,
-            coordinates: room.latitude && (room.longitude || room.Longitude)
-                ? { lat: String(room.latitude), long: String(room.longitude ?? room.Longitude) }
-                : MOCK_PROPERTY_DATA.coordinates,
-            demographics: room.preferredTenants || MOCK_PROPERTY_DATA.demographics,
-            pricing: {
-                monthlyRate: room.price ?? MOCK_PROPERTY_DATA.pricing.monthlyRate,
-                baseRent: room.price ?? MOCK_PROPERTY_DATA.pricing.baseRent,
-                securityDeposit: room.securityDeposit ?? MOCK_PROPERTY_DATA.pricing.securityDeposit,
-                maintenanceFee: room.maintenanceFee ?? MOCK_PROPERTY_DATA.pricing.maintenanceFee,
-            },
-            description: room.description || '',
-        };
-    }, [room]);
-
-    return (
-        <div className="min-h-screen bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-[#0B0B0F] dark:text-white font-sans antialiased">
-            <main className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-                    <div className="space-y-6 lg:col-span-8">
-                        <PropertyHero
-                            heroImage={data.heroImage}
-                            badge={data.badge}
-                            listingCode={data.listingCode}
-                            title={data.title}
-                            location={data.location}
-                        />
-
-                        <PropertyStats stats={data.stats} />
-
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                            <FacilitiesCard facilities={data.facilities} />
-                            <HouseProtocols protocols={data.protocols} />
-                        </div>
-
-                        <AgentCard agent={data.agent} />
-
-                        <MapCard coordinates={data.coordinates} />
-
-                        <Demographics items={data.demographics} />
-                    </div>
-
-                    <div className="space-y-6 lg:col-span-4">
-                        <PropertyGallery images={data.galleryImages} />
-
-                        <div className="sticky top-20">
-                            <BookingCard pricing={data.pricing} />
-                        </div>
-                    </div>
-                </div>
-            </main>
-        </div>
-    );
+    const updateStatus = useUpdateRoomStatus();
+    const deleteRoom = useDeleteRoom();
+    const images = room?.imageUrls ?? [];
+    const hasCoordinates = Number.isFinite(room?.latitude) && Number.isFinite(room?.Longitude);
+    const changeStatus = async (status: string) => { try { await updateStatus.mutateAsync({ id: roomId, status }); toast.success("Room availability updated"); } catch (error) { toast.error(error instanceof Error ? error.message : "Unable to update room status"); } };
+    const remove = async () => { if (!confirm("Delete this room? This cannot be undone.")) return; try { await deleteRoom.mutateAsync(roomId); toast.success("Room deleted"); router.push(`/landlord/properties/${id}`); } catch (error) { toast.error(error instanceof Error ? error.message : "Unable to delete room"); } };
+    if (isLoading) return <div className="flex justify-center py-24"><Loader2 className="h-6 w-6 animate-spin text-indigo-600" /></div>;
+    if (isError || !room) return <div className="p-8 text-sm text-rose-600">Unable to load this room.</div>;
+    return <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-3"><Link href={`/landlord/properties/${id}`} className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-indigo-600"><ArrowLeft className="h-4 w-4" />Back to property</Link><div className="flex gap-2"><Link href={`/landlord/properties/${id}/rooms/${roomId}/edit`} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold hover:bg-slate-50 dark:border-slate-700"><Pencil className="h-3.5 w-3.5" />Edit</Link><button onClick={remove} disabled={deleteRoom.isPending} className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-60"><Trash2 className="h-3.5 w-3.5" />Delete</button></div></div>
+        <div className="grid gap-6 lg:grid-cols-[1.4fr_.6fr]"><section className="space-y-6"><div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"><div className="grid grid-cols-2 gap-1 bg-slate-100 p-1 dark:bg-slate-800">{images.length ? images.map((image: any) => <img key={image.id} src={image.url} alt={room.roomTitle} className="h-56 w-full rounded-lg object-cover" />) : <div className="col-span-2 flex h-56 items-center justify-center text-slate-400"><ImageOff className="h-8 w-8" /></div>}</div><div className="space-y-4 p-5"><div><h1 className="text-2xl font-black">{room.roomTitle}</h1><p className="mt-1 flex items-center gap-1 text-sm text-slate-500"><MapPin className="h-4 w-4" />{room.address || room.location}</p></div><p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">{room.description || "No description provided."}</p><div className="grid grid-cols-2 gap-3 text-sm"><div><span className="text-slate-400">Price</span><p className="font-bold">Rs {Number(room.price).toLocaleString()}/mo</p></div><div><span className="text-slate-400">Room type</span><p className="font-bold">{room.roomType || "Not specified"}</p></div><div><span className="text-slate-400">Floor</span><p className="font-bold">{room.floorNumber ?? "—"}</p></div><div><span className="text-slate-400">Units</span><p className="font-bold">{room.totalRooms ?? "—"}</p></div></div></div></div>{hasCoordinates && <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"><div className="mb-3"><h2 className="text-sm font-bold">Room location</h2><p className="mt-1 text-xs text-slate-500">Use the search, zoom, pan, or marker to explore this location.</p></div><div className="h-80 overflow-hidden rounded-xl"><Map lat={room.latitude} lng={room.Longitude} searchable /></div></section>}</section><aside className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"><div><h2 className="text-sm font-bold">Availability</h2><select value={room.status} onChange={event => changeStatus(event.target.value)} disabled={updateStatus.isPending} className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold dark:border-slate-700 dark:bg-slate-950">{statuses.map(status => <option key={status}>{status}</option>)}</select></div><div><h2 className="text-sm font-bold">Facilities</h2><p className="mt-2 text-sm text-slate-500">{room.facilities?.length ? room.facilities.join(", ") : "None listed"}</p></div><div><h2 className="text-sm font-bold">Rules</h2><p className="mt-2 text-sm text-slate-500">{room.rules?.length ? room.rules.join(", ") : "None listed"}</p></div></aside></div>
+    </div>;
 }

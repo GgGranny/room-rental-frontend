@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { User, Home, Check, ArrowLeft, ChevronLeft } from "lucide-react";
 import { useCompleteProfile, useCurrentUser } from "@/app/hooks/useAuth";
+import { useRouter } from "next/navigation";
 
 export type CompleteProfileType = {
     userId: string;
@@ -13,6 +14,7 @@ export type CompleteProfileType = {
 };
 
 export default function MultiStepOnboarding() {
+    const router = useRouter();
     const [step, setStep] = useState<number>(1);
     const { isPending, data, isError, error } = useCurrentUser();
     const [formData, setFormData] = useState<CompleteProfileType>({
@@ -46,10 +48,17 @@ export default function MultiStepOnboarding() {
     const handleNext = () => {
         if (step < 3) setStep((prev) => prev + 1);
         else {
-            const response: any = completeProfileMutation.mutate(formData);
-            localStorage.setItem("token", response.data.token);
-            localStorage.setItem("refreshToken", response.data.refreshToken);
-            console.log("Profile completion response:", response.data);
+            try {
+                const response: any = completeProfileMutation.mutate(formData);
+                if (response?.data?.role === "ROLE_USER") {
+                    router.push("/home");
+                } else if (response?.data?.role === "ROLE_LANDLORD") {
+                    router.push("/landlord");
+                }
+                console.log("Profile completion response:", response.data);
+            } catch (error) {
+                console.error("Error completing profile:", error);
+            }
         }
     };
 

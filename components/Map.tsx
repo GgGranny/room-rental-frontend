@@ -2,175 +2,112 @@
 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import styles from './map.module.css';
-import { MaptilerLayer, MapStyle } from "@maptiler/leaflet-maptilersdk";
+import { Search, Loader2, MapPin } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
+import styles from "./map.module.css";
 
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: (markerIcon2x as any).src ?? markerIcon2x,
-    iconUrl: (markerIcon as any).src ?? markerIcon,
-    shadowUrl: (markerShadow as any).src ?? markerShadow,
-});
+type ImportedImage = string | { src: string };
+const imagePath = (image: ImportedImage) => typeof image === "string" ? image : image.src;
+L.Icon.Default.mergeOptions({ iconRetinaUrl: imagePath(markerIcon2x), iconUrl: imagePath(markerIcon), shadowUrl: imagePath(markerShadow) });
 
-const customIcon = L.icon({
-    iconUrl: '/my-pin.png',
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-});
+type Position = { lat: number; lng: number };
+type LocationSelection = Position & { address: string };
+type SearchResult = LocationSelection & { id: string };
+type GeocodingFeature = { id: string; center: [number, number]; place_name: string };
 
-
-interface MapProps {
-    lat: number;
-    lng: number;
-    onPositionChange?: (pos: { lat: number; lng: number }) => void;
-    mapStyle?: MapStyle;
-    origin?: { lat: number; lng: number };
+interface MapProps extends Position {
+    onPositionChange?: (position: Position) => void;
+    onLocationChange?: (location: LocationSelection) => void;
+    searchable?: boolean;
+    interactive?: boolean;
+    heightClassName?: string;
 }
 
-const Map: React.FC<MapProps> = ({ lat, lng, onPositionChange, mapStyle = MapStyle.STREETS, origin }) => {
+const fallbackAddress = (position: Position) => `${position.lat.toFixed(6)}, ${position.lng.toFixed(6)}`;
+const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_API_KEY || "mseS7PX8i6psLfEP6Bhy";
+
+export default function Map({ lat, lng, onPositionChange, onLocationChange, searchable = false, interactive = true, heightClassName }: MapProps) {
     const mapContainer = useRef<HTMLDivElement | null>(null);
     const map = useRef<L.Map | null>(null);
     const marker = useRef<L.Marker | null>(null);
-    const originMarker = useRef<L.CircleMarker | null>(null);
-    const routeLayer = useRef<L.Polyline | null>(null);
-    const mtLayer = useRef<any>(null);
-    const center = { lat, lng };
-    const [zoom, setZoom] = useState<number>(17);
-    const [routeInfo, setRouteInfo] = useState<{ distance: number; duration: number } | null>(null);
+    const [query, setQuery] = useState("");
+    const [results, setResults] = useState<SearchResult[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    const emitLocation = async (position: Position, knownAddress?: string) => {
+        onPositionChange?.(position);
+        if (!onLocationChange) return;
+        if (knownAddress) return onLocationChange({ ...position, address: knownAddress });
+        try {
+            const response = await fetch(`https://api.maptiler.com/geocoding/${position.lng},${position.lat}.json?key=${MAPTILER_KEY}`);
+            const data = await response.json();
+            onLocationChange({ ...position, address: data.features?.[0]?.place_name ?? fallbackAddress(position) });
+        } catch {
+            onLocationChange({ ...position, address: fallbackAddress(position) });
+        }
+    };
+
+    const moveMarker = (position: Position, options: { animate?: boolean; address?: string } = {}) => {
+        if (!map.current || !marker.current) return;
+        marker.current.setLatLng([position.lat, position.lng]);
+        map.current.setView([position.lat, position.lng], Math.max(map.current.getZoom(), 13), { animate: options.animate ?? true });
+        void emitLocation(position, options.address);
+    };
 
     useEffect(() => {
-        if (map.current) return;
-
-        map.current = new L.Map(mapContainer.current, {
-            center: L.latLng(center.lat, center.lng),
-            zoom: zoom
+        if (!mapContainer.current || map.current) return;
+        const leafletMap = L.map(mapContainer.current, {
+            center: [lat, lng], zoom: 13, zoomControl: true,
+            scrollWheelZoom: interactive, doubleClickZoom: interactive, dragging: interactive, touchZoom: interactive,
         });
-
-        const handleZoom = () => {
-            if (!map.current) return;
-            setZoom(map.current.getZoom());
-        };
-        map.current.on('zoomend', handleZoom);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            maxZoom: 19,
-        }).addTo(map.current);
-
-        marker.current = L.marker([center.lat, center.lng], { draggable: true }).addTo(map.current);
-
-        marker.current.on('dragend', () => {
-            const pos = marker.current.getLatLng();
-            onPositionChange?.({ lat: pos.lat, lng: pos.lng });
-        });
-
-        const handleClick = (e: L.LeafletMouseEvent) => {
-            const { lat, lng } = e.latlng;
-            marker.current.setLatLng([lat, lng]);
-            onPositionChange?.({ lat, lng });
-        };
-
-        map.current.on('click', handleClick);
-        console.log(`lat: ${lat} lng: ${lng}`)
-
-
-        return () => {
-            if (map.current) {
-                map.current.off('zoomend', handleZoom as any);
-                map.current.remove();
-            }
-            map.current = null;
-            marker.current = null;
-        };
-    }, []); // run once on mount only
-
+        map.current = leafletMap;
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', maxZoom: 13,
+        }).addTo(leafletMap);
+        marker.current = L.marker([lat, lng], { draggable: interactive, keyboard: interactive }).addTo(leafletMap);
+        marker.current.on("dragend", () => { const point = marker.current?.getLatLng(); if (point) moveMarker(point); });
+        leafletMap.on("click", (event: L.LeafletMouseEvent) => { if (interactive) moveMarker(event.latlng); });
+        const observer = new ResizeObserver(() => leafletMap.invalidateSize());
+        observer.observe(mapContainer.current);
+        return () => { observer.disconnect(); leafletMap.remove(); map.current = null; marker.current = null; };
+        // Leaflet must initialize only once; later coordinates are handled by the controlled update below.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     useEffect(() => {
-        console.log(`lat: ${lat} lng: ${lng} zoom: ${zoom}`)
-    }, [center.lat, center.lng, zoom])
+        if (!map.current || !marker.current || !Number.isFinite(lat) || !Number.isFinite(lng)) return;
+        marker.current.setLatLng([lat, lng]);
+        map.current.setView([lat, lng], map.current.getZoom(), { animate: true });
+    }, [lat, lng]);
 
-    useEffect(() => {
-        if (!map.current) return;
-        map.current.setView(L.latLng(center.lat, center.lng), zoom);
-        marker.current?.setLatLng([center.lat, center.lng]); // move marker to match search/geolocation result
-    }, [center.lat, center.lng, zoom]);
+    const search = async (value: string) => {
+        if (!value.trim()) { setResults([]); return; }
+        setIsSearching(true);
+        try {
+            const response = await fetch(`https://api.maptiler.com/geocoding/${encodeURIComponent(value)}.json?key=${MAPTILER_KEY}&limit=5`);
+            const data = await response.json();
+            const features = (data.features ?? []) as GeocodingFeature[];
+            setResults(features.map(feature => ({ id: feature.id, lat: feature.center[1], lng: feature.center[0], address: feature.place_name })));
+        } catch { setResults([]); } finally { setIsSearching(false); }
+    };
 
-    useEffect(() => {
-        if (!mtLayer.current) return;
-        mtLayer.current.setStyle(mapStyle);
-    }, [mapStyle]);
+    const updateQuery = (value: string) => {
+        setQuery(value);
+        if (searchTimer.current) clearTimeout(searchTimer.current);
+        searchTimer.current = setTimeout(() => void search(value), 300);
+    };
 
-    useEffect(() => {
-        if (!map.current || !origin?.lat || !origin?.lng) return;
-        if (originMarker.current) return; // only place once
-
-        originMarker.current = L.circleMarker([origin.lat, origin.lng], {
-            radius: 8,
-            color: "#4285F4",
-            fillColor: "#4285F4",
-            fillOpacity: 0.8,
-        }).addTo(map.current).bindTooltip("You are here");
-    }, [origin?.lat, origin?.lng]);
-
-    // Effect: fetch + draw route whenever destination (marker) or origin changes
-    useEffect(() => {
-        if (!map.current || !origin?.lat || !origin?.lng) return;
-
-        const fetchRoute = async () => {
-            try {
-                const url = `https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${center.lng},${center.lat}?overview=full&geometries=geojson`;
-                const res = await fetch(url);
-                const data = await res.json();
-
-                const route = data.routes?.[0];
-                if (!route) return;
-
-                const latlngs = route.geometry.coordinates.map(([lng, lat]: [number, number]) => [lat, lng]);
-
-                if (routeLayer.current) {
-                    map.current.removeLayer(routeLayer.current);
-                }
-
-                routeLayer.current = L.polyline(latlngs, {
-                    color: "#1a73e8",
-                    weight: 5,
-                    opacity: 0.8,
-                }).addTo(map.current);
-
-                // keep current zoom consistent — pan to route center instead of auto-zooming
-                try {
-                    const boundsCenter = routeLayer.current.getBounds().getCenter();
-                    map.current.panTo(boundsCenter);
-                } catch (e) {
-                    // fallback: do nothing
-                }
-
-                setRouteInfo({
-                    distance: route.distance, // meters
-                    duration: route.duration, // seconds
-                });
-            } catch (err) {
-                console.error("Directions error:", err);
-            }
-        };
-
-        fetchRoute();
-    }, [origin?.lat, origin?.lng, center.lat, center.lng]);
-
-    return (
-        <div className={styles.mapWrap}>
-            <div ref={mapContainer} className={styles.map} />
-            {routeInfo && (
-                <div className={styles.routeInfo}>
-                    {(routeInfo.distance / 1000).toFixed(1)} km · {Math.round(routeInfo.duration / 60)} min
-                </div>
-            )}
-        </div>
-    )
+    return <div className={`${styles.mapWrap} ${heightClassName ?? ""}`}>
+        {searchable && <div className={styles.searchWrap}>
+            <Search className={styles.searchIcon} />
+            <input value={query} onChange={(event) => updateQuery(event.target.value)} placeholder="Search for an address or landmark" className={styles.searchInput} aria-label="Search for a location" />
+            {isSearching && <Loader2 className={`${styles.loadingIcon} animate-spin`} />}
+            {results.length > 0 && <ul className={styles.results}>{results.map(result => <li key={result.id}><button type="button" onClick={() => { setQuery(result.address); setResults([]); moveMarker(result, { address: result.address }); }}><MapPin /><span>{result.address}</span></button></li>)}</ul>}
+        </div>}
+        <div ref={mapContainer} className={styles.map} />
+    </div>;
 }
-
-export default Map; 

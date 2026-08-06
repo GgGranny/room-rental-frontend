@@ -1,8 +1,8 @@
 "use client";
 
-import CheckBox from "@/app/components/ui/CheckBox";
-import ImageDisplay from "@/app/components/ui/ImageDisplay";
-import Input from "@/app/components/ui/Input";
+import CheckBox from "@/components/myui/CheckBox";
+import ImageDisplay from "@/components/myui/ImageDisplay";
+import Input from "@/components/myui/Input";
 import { authService } from "@/app/services/authService";
 import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
