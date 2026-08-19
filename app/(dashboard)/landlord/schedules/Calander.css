@@ -1,0 +1,252 @@
+/* ===========================================================
+   Calendar theme
+   A quiet, dashboard-grade look: neutral surfaces, one accent
+   (deep teal) reserved for the current day and primary events.
+   =========================================================== */
+
+.calendar-shell {
+    --cal-font: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+
+    --cal-bg: #ffffff;
+    --cal-surface: #fafafa;
+    --cal-border: #e6e6e4;
+    --cal-border-soft: #eeeeec;
+    --cal-text: #18181b;
+    --cal-text-muted: #8a8a86;
+    --cal-text-faint: #b6b6b1;
+
+    --cal-accent: #0f6f66;
+    /* deep teal — primary accent */
+    --cal-accent-soft: #e6f2f0;
+    --cal-accent-contrast: #ffffff;
+
+    --cal-secondary: #57534e;
+    /* warm slate — secondary events */
+    --cal-secondary-soft: #f2f1ef;
+
+    --cal-weekend: #fbfaf8;
+    --cal-today: #f0f7f6;
+
+    --cal-radius: 10px;
+    --cal-radius-sm: 6px;
+
+    font-family: var(--cal-font);
+    color: var(--cal-text);
+    background: var(--cal-bg);
+    border: 1px solid var(--cal-border);
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(15, 15, 14, 0.04), 0 8px 24px -12px rgba(15, 15, 14, 0.08);
+    padding: 20px;
+    height: 100%;
+}
+
+.calendar-shell .dark & {
+    --cal-bg: #17171a;
+    --cal-surface: #1c1c1f;
+    --cal-border: #2a2a2e;
+    --cal-border-soft: #232326;
+    --cal-text: #f4f4f3;
+    --cal-text-muted: #9a9a97;
+    --cal-text-faint: #6b6b68;
+    --cal-accent-soft: #123936;
+    --cal-secondary-soft: #232326;
+    --cal-weekend: #1a1a1d;
+    --cal-today: #12211f;
+}
+
+/* ---------- Toolbar ---------- */
+
+.calendar-shell .rbc-toolbar {
+    font-family: var(--cal-font);
+    margin-bottom: 18px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.calendar-shell .rbc-toolbar .rbc-toolbar-label {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--cal-text);
+}
+
+.calendar-shell .rbc-toolbar button {
+    font-family: var(--cal-font);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--cal-text-muted);
+    background: transparent;
+    border: 1px solid var(--cal-border);
+    border-radius: var(--cal-radius-sm);
+    padding: 6px 12px;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.calendar-shell .rbc-toolbar button:hover {
+    color: var(--cal-text);
+    background: var(--cal-surface);
+    border-color: var(--cal-border);
+}
+
+.calendar-shell .rbc-toolbar button:focus-visible {
+    outline: 2px solid var(--cal-accent);
+    outline-offset: 1px;
+}
+
+.calendar-shell .rbc-toolbar button.rbc-active {
+    color: var(--cal-accent-contrast);
+    background: var(--cal-accent);
+    border-color: var(--cal-accent);
+}
+
+.calendar-shell .rbc-toolbar button.rbc-active:hover {
+    background: var(--cal-accent);
+    opacity: 0.92;
+}
+
+/* ---------- Grid & headers ---------- */
+
+.calendar-shell .rbc-month-view,
+.calendar-shell .rbc-time-view,
+.calendar-shell .rbc-agenda-view {
+    border: 1px solid var(--cal-border-soft);
+    border-radius: var(--cal-radius);
+    overflow: hidden;
+}
+
+.calendar-shell .rbc-header {
+    font-family: var(--cal-font);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--cal-text-muted);
+    background: var(--cal-surface);
+    border-color: var(--cal-border-soft);
+    padding: 10px 4px;
+}
+
+.calendar-shell .rbc-month-row+.rbc-month-row,
+.calendar-shell .rbc-day-bg+.rbc-day-bg,
+.calendar-shell .rbc-time-content>*+*>* {
+    border-color: var(--cal-border-soft);
+}
+
+.calendar-shell .rbc-off-range-bg {
+    background: var(--cal-surface);
+}
+
+.calendar-shell .rbc-off-range {
+    color: var(--cal-text-faint);
+}
+
+.calendar-shell .rbc-date-cell {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--cal-text-muted);
+    padding: 6px 8px 0 0;
+}
+
+.calendar-shell .rbc-date-cell.rbc-now {
+    color: var(--cal-accent);
+    font-weight: 700;
+}
+
+.calendar-shell .rbc-day-bg.rbc-today,
+.calendar-shell .rbc-today {
+    background: var(--cal-today);
+}
+
+.calendar-shell .rbc-day-bg.rbc-weekend {
+    background: var(--cal-weekend);
+}
+
+/* ---------- Events ---------- */
+
+.calendar-shell .rbc-event {
+    font-family: var(--cal-font);
+    font-size: 12.5px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: var(--cal-radius-sm);
+    box-shadow: none;
+}
+
+.calendar-shell .rbc-event:focus-visible {
+    outline: 2px solid var(--cal-accent);
+    outline-offset: 1px;
+}
+
+.calendar-shell .rbc-event.event-variant-primary {
+    background: var(--cal-accent);
+    border: 1px solid var(--cal-accent);
+    color: var(--cal-accent-contrast);
+}
+
+.calendar-shell .rbc-event.event-variant-secondary {
+    background: var(--cal-secondary-soft);
+    border: 1px solid var(--cal-border);
+    color: var(--cal-secondary);
+}
+
+.calendar-shell .rbc-event.event-variant-outline {
+    background: transparent;
+    border: 1px solid var(--cal-accent);
+    color: var(--cal-accent);
+}
+
+.calendar-shell .rbc-event-label {
+    font-size: 11px;
+    opacity: 0.85;
+}
+
+.calendar-shell .rbc-show-more {
+    font-family: var(--cal-font);
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--cal-accent);
+    background: transparent;
+}
+
+/* ---------- Time grid ---------- */
+
+.calendar-shell .rbc-time-header-content,
+.calendar-shell .rbc-time-content {
+    border-color: var(--cal-border-soft);
+}
+
+.calendar-shell .rbc-timeslot-group {
+    border-color: var(--cal-border-soft);
+}
+
+.calendar-shell .rbc-time-slot .rbc-label {
+    font-size: 11px;
+    color: var(--cal-text-faint);
+}
+
+.calendar-shell .rbc-current-time-indicator {
+    background-color: var(--cal-accent);
+    height: 2px;
+}
+
+/* ---------- Agenda ---------- */
+
+.calendar-shell .rbc-agenda-view table.rbc-agenda-table {
+    font-family: var(--cal-font);
+    font-size: 13px;
+}
+
+.calendar-shell .rbc-agenda-view table.rbc-agenda-table thead>tr>th {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--cal-text-muted);
+    border-bottom-color: var(--cal-border-soft);
+    padding-bottom: 10px;
+}
+
+.calendar-shell .rbc-agenda-view table.rbc-agenda-table tbody>tr>td {
+    border-color: var(--cal-border-soft);
+    padding: 8px 10px;
+}

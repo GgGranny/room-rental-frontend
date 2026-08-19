@@ -1,18 +1,17 @@
 "use client";
 
-import LandlordSidebar from "@/app/components/LandlordSidebar";
+import AdminNav from "@/components/AdminNav";
+import LandlordSidebar from "@/components/LandlordSidebar";
 import React from "react";
 
 export default function LandlordLayout({ children }: { children: React.ReactNode }) {
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
-            {/* Left Fixed Structural Sidebar Navigation Panel */}
-            <LandlordSidebar />
-
-            {/* Main Dynamically Swapped Panel Content Viewport */}
-            {/* Adjust left padding dynamically via Tailwind matching standard sidebar width expansions */}
-            <div className="pl-20 sm:pl-66 md:pl-70 transition-all duration-300">
-                <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+        <div className="flex min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
+            <LandlordSidebar collapsed={isSidebarCollapsed} setCollapsed={setIsSidebarCollapsed} />
+            <div className={`flex-auto transition-all duration-300 ${isSidebarCollapsed ? "lg:ml-20" : "lg:ml-64"}`}>
+                <main className=" max-w-full mx-auto">
+                    <AdminNav />
                     {children}
                 </main>
             </div>

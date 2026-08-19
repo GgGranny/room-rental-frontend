@@ -3,69 +3,40 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import {
-    LayoutDashboard,
     Building2,
     CalendarDays,
-    Wallet,
-    Users2,
-    ArrowUpRight,
     Plus,
     CheckCircle2,
     Clock,
-    AlertTriangle,
+    XCircle,
     ChevronRight,
-    TrendingUp,
-    MessageSquare,
-    Sparkles
+    Sparkles,
+    Calendar
 } from "lucide-react";
-
-// Mock Data Matrices for the Top-Level Portal Aggregate
-const recentActivity = [
-    {
-        id: "BKG-4402",
-        tenant: "Sarah Jenkins",
-        space: "The Glass Pavilion",
-        action: "New Booking Confirmed",
-        time: "12 mins ago",
-        amount: 2450,
-        status: "confirmed"
-    },
-    {
-        id: "BKG-4399",
-        tenant: "Marcus Vance",
-        space: "Horizon Suite",
-        action: "Check-out Complete",
-        time: "2 hours ago",
-        amount: 1900,
-        status: "completed"
-    },
-    {
-        id: "MNT-1022",
-        tenant: "Elena Rostova",
-        space: "Timber & Clay Studio",
-        action: "HVAC Repair Request",
-        time: "4 hours ago",
-        amount: 0,
-        status: "urgent"
-    },
-    {
-        id: "BKG-4391",
-        tenant: "David Cho",
-        space: "Eco-Pod 04",
-        action: "Extension Pending Escrow",
-        time: "1 day ago",
-        amount: 650,
-        status: "pending"
-    }
-];
-
-const maintenanceAlerts = [
-    { space: "Timber & Clay Studio", issue: "HVAC failure in West Block", level: "critical" },
-    { space: "Horizon Suite", issue: "Smart-lock calibration issue", level: "warning" }
-];
+import { useLandlordSchedules } from "@/app/hooks/useSchedule";
+import { useGetAllProperty } from "@/app/hooks/useProperty";
 
 export default function LandLordOverview() {
     const [timeframe, setTimeframe] = useState("30");
+
+    const { data: schedulesData, isLoading: schedulesLoading } = useLandlordSchedules();
+    const { data: propertiesData, isLoading: propertiesLoading } = useGetAllProperty();
+
+    const schedules = Array.isArray(schedulesData) ? schedulesData : [];
+
+    // Properties response unwrapping safely
+    let properties: any[] = [];
+    if (propertiesData) {
+        if (Array.isArray(propertiesData)) {
+            properties = propertiesData;
+        } else if (Array.isArray((propertiesData as any).data)) {
+            properties = (propertiesData as any).data;
+        }
+    }
+
+    const pendingCount = schedules.filter((s) => s.status === "PENDING").length;
+    const approvedCount = schedules.filter((s) => s.status === "APPROVED").length;
+    const featuredPropertiesCount = properties.filter((p) => p.featured || p.isFeatured).length;
 
     return (
         <div className="space-y-6">
@@ -74,10 +45,10 @@ export default function LandLordOverview() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-150 dark:border-slate-900 pb-5">
                 <div className="space-y-1">
                     <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-                        Welcome back, Julian <span className="animate-wave origin-bottom-right inline-block">👋</span>
+                        Landlord Dashboard <span className="animate-wave origin-bottom-right inline-block">👋</span>
                     </h1>
                     <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                        Here is the operational efficiency index for your real estate portfolio today.
+                        Real-time overview of your listed properties and tenant viewing schedules.
                     </p>
                 </div>
 
@@ -94,10 +65,10 @@ export default function LandLordOverview() {
                     </select>
 
                     <Link
-                        href="/admin/rooms/new"
-                        className="bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+                        href="/landlord/properties/add"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm flex items-center gap-1.5"
                     >
-                        <Plus className="w-3.5 h-3.5" /> List Space
+                        <Plus className="w-3.5 h-3.5" /> Add Property
                     </Link>
                 </div>
             </div>
@@ -105,10 +76,42 @@ export default function LandLordOverview() {
             {/* 2. AGGREGATE CORE METRIC OVERVIEW GRID */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                    { label: "Gross Revenue Index", value: "$18,430.00", change: "+12.4%", positive: true, icon: Wallet, link: "/admin/earnings" },
-                    { label: "Portfolio Occupancy", value: "88.4%", change: "+3.2%", positive: true, icon: Building2, link: "/admin/rooms" },
-                    { label: "Active Allocations", value: "48 Bookings", change: "6 pending", positive: true, isNeutral: true, icon: CalendarDays, link: "/admin/bookings" },
-                    { label: "Unread Tenant Threads", value: "5 Messages", change: "Action required", positive: false, isNeutral: true, icon: MessageSquare, link: "/admin/messages" },
+                    {
+                        label: "Listed Properties",
+                        value: propertiesLoading ? "..." : `${properties.length} Active`,
+                        change: "Manage portfolio",
+                        positive: true,
+                        isNeutral: true,
+                        icon: Building2,
+                        link: "/landlord/properties"
+                    },
+                    {
+                        label: "Pending Viewings",
+                        value: schedulesLoading ? "..." : `${pendingCount} Request${pendingCount === 1 ? "" : "s"}`,
+                        change: "Requires action",
+                        positive: pendingCount === 0,
+                        isNeutral: false,
+                        icon: Clock,
+                        link: "/landlord/schedules"
+                    },
+                    {
+                        label: "Approved Viewings",
+                        value: schedulesLoading ? "..." : `${approvedCount} Scheduled`,
+                        change: "Confirmed visits",
+                        positive: true,
+                        isNeutral: true,
+                        icon: CalendarDays,
+                        link: "/landlord/schedules"
+                    },
+                    {
+                        label: "Featured Properties",
+                        value: propertiesLoading ? "..." : `${featuredPropertiesCount} Promoted`,
+                        change: "Boost visibility",
+                        positive: true,
+                        isNeutral: true,
+                        icon: Sparkles,
+                        link: "/landlord/featured"
+                    },
                 ].map((stat, idx) => {
                     const Icon = stat.icon;
                     return (
@@ -140,94 +143,107 @@ export default function LandLordOverview() {
             {/* 3. SPLIT COLUMN DATA INTERFACE LAYOUT */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-                {/* LEFT COLUMN: LIVE RECENT LOGS GRID (8 COLUMNS) */}
+                {/* LEFT COLUMN: LIVE RECENT VIEWING SCHEDULES GRID (8 COLUMNS) */}
                 <div className="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-850 rounded-2xl shadow-sm overflow-hidden">
                     <div className="p-5 border-b border-slate-100 dark:border-slate-850/60 flex items-center justify-between">
                         <div className="space-y-0.5">
-                            <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Live System Feed</h3>
-                            <p className="text-[11px] text-slate-500 font-medium">Real-time status changes for room inventory and tenant bookings.</p>
+                            <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Live Viewing Feed</h3>
+                            <p className="text-[11px] text-slate-500 font-medium">Real-time room viewing visit requests from tenants.</p>
                         </div>
-                        <Link href="/admin/bookings" className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-0.5 hover:underline">
-                            View Ledger <ChevronRight className="w-3 h-3" />
+                        <Link href="/landlord/schedules" className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-0.5 hover:underline">
+                            View All Schedules <ChevronRight className="w-3 h-3" />
                         </Link>
                     </div>
 
-                    <div className="divide-y divide-slate-100 dark:divide-slate-850/60">
-                        {recentActivity.map((log) => (
-                            <div key={log.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/40 dark:hover:bg-slate-950/20 transition-all">
-                                <div className="flex items-start gap-3 min-w-0">
-                                    {/* Status-specific icon treatments */}
-                                    <div className="mt-0.5 shrink-0">
-                                        {log.status === "confirmed" && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
-                                        {log.status === "completed" && <CheckCircle2 className="w-4 h-4 text-slate-400" />}
-                                        {log.status === "pending" && <Clock className="w-4 h-4 text-amber-500" />}
-                                        {log.status === "urgent" && <AlertTriangle className="w-4 h-4 text-rose-500" />}
-                                    </div>
-                                    <div className="space-y-0.5 min-w-0">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="text-xs font-black text-slate-900 dark:text-white tracking-tight">{log.tenant}</span>
-                                            <span className="text-[9px] font-mono font-bold text-slate-400 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 px-1 rounded">{log.id}</span>
+                    {schedulesLoading ? (
+                        <div className="p-8 text-center text-xs text-slate-400">Loading viewing requests...</div>
+                    ) : schedules.length === 0 ? (
+                        <div className="p-8 text-center space-y-2">
+                            <Calendar className="w-8 h-8 text-slate-300 mx-auto" />
+                            <p className="text-xs font-medium text-slate-500">No viewing requests received yet.</p>
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-slate-100 dark:divide-slate-850/60">
+                            {schedules.slice(0, 5).map((log) => (
+                                <div key={log.scheduleId} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/40 dark:hover:bg-slate-950/20 transition-all">
+                                    <div className="flex items-start gap-3 min-w-0">
+                                        <div className="mt-0.5 shrink-0">
+                                            {log.status === "APPROVED" && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                                            {log.status === "PENDING" && <Clock className="w-4 h-4 text-amber-500" />}
+                                            {log.status === "REJECTED" && <XCircle className="w-4 h-4 text-rose-500" />}
+                                            {log.status === "CANCELLED" && <XCircle className="w-4 h-4 text-slate-400" />}
                                         </div>
-                                        <p className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">{log.action} — <span className="text-slate-400 font-medium">{log.space}</span></p>
+                                        <div className="space-y-0.5 min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="text-xs font-black text-slate-900 dark:text-white tracking-tight">
+                                                    {log.tenantName || log.tenantEmail || "Tenant"}
+                                                </span>
+                                                <span className="text-[9px] font-mono font-bold text-slate-400 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 px-1 rounded">
+                                                    {log.status}
+                                                </span>
+                                            </div>
+                                            <p className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">
+                                                Requested Room Visit: <span className="text-slate-800 dark:text-slate-200">{log.roomTitle || "Room Listing"}</span>
+                                            </p>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="sm:text-right flex sm:flex-col justify-between sm:justify-center items-center sm:items-end gap-1 shrink-0">
-                                    {log.amount > 0 && (
-                                        <span className="text-xs font-black font-mono text-slate-900 dark:text-white">
-                                            ${log.amount.toLocaleString()}.00
+                                    <div className="sm:text-right flex sm:flex-col justify-between sm:justify-center items-center sm:items-end gap-1 shrink-0">
+                                        <span className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                                            {new Date(log.scheduledAt).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
                                         </span>
-                                    )}
-                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium block">{log.time}</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* RIGHT COLUMN: ACTION RADIALS & ALERTS (4 COLUMNS) */}
-                <div className="lg:col-span-4 space-y-6">
-
-                    {/* CRITICAL INFRASTRUCTURE MAINTENANCE MONITOR */}
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-850 p-5 rounded-2xl shadow-sm space-y-4">
-                        <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Property Health Desk</h3>
-
-                        <div className="space-y-2.5">
-                            {maintenanceAlerts.map((alert, idx) => (
-                                <div key={idx} className="p-3 bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-900 rounded-xl flex items-start gap-2.5">
-                                    <AlertTriangle className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${alert.level === "critical" ? "text-rose-500" : "text-amber-500"}`} />
-                                    <div className="min-w-0 space-y-0.5">
-                                        <h4 className="text-[11px] font-black text-slate-900 dark:text-white truncate tracking-tight">{alert.space}</h4>
-                                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold leading-normal">{alert.issue}</p>
                                     </div>
                                 </div>
                             ))}
                         </div>
+                    )}
+                </div>
 
-                        <Link href="/admin/rooms" className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-900 border border-slate-200/40 dark:border-slate-850 py-2 px-3 rounded-xl text-[11px] font-bold text-slate-600 dark:text-slate-300 transition-all text-center block">
-                            Manage Space States
-                        </Link>
-                    </div>
+                {/* RIGHT COLUMN: ACTION & PROMOTIONS (4 COLUMNS) */}
+                <div className="lg:col-span-4 space-y-6">
 
-                    {/* METRIC CARD: QUICK SYSTEM PERFORMANCE METADATA */}
-                    <div className="bg-gradient-to-tr from-slate-900 to-indigo-950 text-white p-5 rounded-2xl shadow-md space-y-4 relative overflow-hidden group">
+                    {/* FEATURED PROPERTY PROMOTION CARD */}
+                    <div className="bg-gradient-to-tr from-slate-900 via-indigo-950 to-slate-900 text-white p-5 rounded-2xl shadow-md space-y-4 relative overflow-hidden group">
                         <div className="absolute -right-10 -bottom-10 w-28 h-28 bg-indigo-500/10 rounded-full blur-xl group-hover:scale-125 transition-all" />
                         <div className="space-y-1">
                             <div className="flex items-center gap-1">
-                                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-                                <span className="text-[9px] font-black uppercase tracking-wider text-indigo-400">Optimization Index</span>
+                                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                                <span className="text-[9px] font-black uppercase tracking-wider text-amber-400">Feature Listing</span>
                             </div>
-                            <h4 className="text-sm font-black tracking-tight">Escrow Velocity Rating</h4>
+                            <h4 className="text-sm font-black tracking-tight">Promote Your Property</h4>
                         </div>
 
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-black font-mono">94.2</span>
-                            <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-0.5"><TrendingUp className="w-3 h-3" /> Excellent</span>
-                        </div>
-
-                        <p className="text-[11px] text-slate-400 font-semibold leading-relaxed">
-                            Your average booking confirmation-to-settlement speed increased by 4.2 hours this week.
+                        <p className="text-[11px] text-slate-300 font-medium leading-relaxed">
+                            Feature your property on top of tenant search results for 30 days via eSewa or Khalti.
                         </p>
+
+                        <Link
+                            href="/landlord/featured"
+                            className="inline-block w-full bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black py-2.5 px-4 rounded-xl text-center transition-all shadow-sm"
+                        >
+                            Feature Property (500 NPR)
+                        </Link>
+                    </div>
+
+                    {/* QUICK NAVIGATION */}
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-850 p-5 rounded-2xl shadow-sm space-y-3">
+                        <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Quick Actions</h3>
+
+                        <div className="space-y-2">
+                            <Link
+                                href="/landlord/properties/add"
+                                className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-900 border border-slate-200/40 dark:border-slate-850 py-2.5 px-3 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 transition-all text-center block"
+                            >
+                                + List New Property
+                            </Link>
+
+                            <Link
+                                href="/landlord/properties"
+                                className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-900 border border-slate-200/40 dark:border-slate-850 py-2.5 px-3 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 transition-all text-center block"
+                            >
+                                Manage All Properties
+                            </Link>
+                        </div>
                     </div>
 
                 </div>

@@ -1,8 +1,8 @@
 "use client";
 
-import CheckBox from "@/app/components/ui/CheckBox";
-import ImageDisplay from "@/app/components/ui/ImageDisplay";
-import Input from "@/app/components/ui/Input";
+import CheckBox from "@/components/myui/CheckBox";
+import ImageDisplay from "@/components/myui/ImageDisplay";
+import Input from "@/components/myui/Input";
 import { useGooleLogin, useLogin } from "@/app/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -45,7 +45,17 @@ export default function Login() {
             localStorage.setItem("token", response.data.token);
             localStorage.setItem("refreshToken", response.data.refreshToken);
             localStorage.setItem("userId", response.data.userId);
-            router.push("/home")
+            localStorage.setItem("landlordId", response.data.landlordId);
+
+            // Role-based redirect
+            const role = response.data.role;
+            if (role === "ROLE_LANDLORD") {
+                router.push("/landlord");
+            } else if (role === "ROLE_ADMIN") {
+                router.push("/admin");
+            } else {
+                router.push("/home");
+            }
             console.log("Login successful:", response);
         } catch (error) {
             toast.error("Login failed");

@@ -8,5 +8,7 @@ export const authService = {
     checkProfileCompletion: () => apiClient.get("auth/is-profile-complete"),
     completeProfile: (data: CompleteProfileType) => apiClient.post("auth/complete-profile", data),
     getCurrentUser: () => apiClient.get("auth/me"),
-    submitKyc: (data: any) => apiClient.post("kyc", data)
+    submitKyc: (data: any) => apiClient.post("kyc", data),
+    getMyKyc: () => apiClient.get("kyc/status"),
+    logout: () => apiClient.post("auth/logout", {}),
 }

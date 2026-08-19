@@ -1,0 +1,48 @@
+/* search-bar.module.css */
+.wrap {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    /* must sit above Leaflet's own panes */
+    width: 320px;
+    max-width: 90%;
+}
+
+.input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    font-size: 14px;
+}
+
+.status {
+    background: white;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: #666;
+}
+
+.results {
+    list-style: none;
+    margin: 4px 0 0;
+    padding: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.resultItem {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.resultItem:hover {
+    background: #f0f0f0;
+}
