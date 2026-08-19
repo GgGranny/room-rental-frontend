@@ -1,14 +1,33 @@
-import { Bell, Search, Settings, SlidersHorizontal } from "lucide-react";
+"use client";
+
+import { Bell, Search, SlidersHorizontal, User as UserIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import ThemeToggle from "./ToggleTheme";
+import LogoutButton from "./LogoutButton";
 
 export default function Navbar() {
+    const router = useRouter();
+    const [menuOpen, setMenuOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setMenuOpen(false);
+            }
+        }
+        if (menuOpen) document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [menuOpen]);
+
     return (
         <nav>
             <nav className="w-full bg-white border-b border-slate-100 px-6 py-3.5 fixed top-0 z-50 flex items-center justify-between shadow-sm shadow-slate-100/40 dark:bg-slate-900 dark:border-slate-700/50 dark:shadow-slate-900/20 ">
                 <ThemeToggle />
                 <div className="flex items-center gap-12 flex-1">
                     {/* Logo */}
-                    <span className="text-xl font-bold text-indigo-600 tracking-tight dark:text-indigo-400">RoomEase</span>
+                    <button onClick={() => router.push("/home")} className="text-xl font-bold text-indigo-600 tracking-tight dark:text-indigo-400">RoomEase</button>
 
                     {/* Search Bar Container */}
                     <div className="relative w-full max-w-md hidden md:block">
@@ -27,9 +46,9 @@ export default function Navbar() {
                 {/* Mid & Right Nav elements */}
                 <div className="flex items-center gap-6">
                     <div className="flex items-center gap-6 text-xs font-medium text-slate-500">
-                        <button className="text-indigo-600 relative py-1 after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-indigo-600 dark:text-slate-300 dark:after:bg-indigo-400 dark:hover:text-white">Explore</button>
-                        <button className="hover:text-slate-800 transition-colors dark:text-slate-300 dark:after:bg-indigo-400 dark:hover:text-white">My Bookings</button>
-                        <button className="hover:text-slate-800 transition-colors dark:text-slate-300 dark:after:bg-indigo-400 dark:hover:text-white">Favorites</button>
+                        <button onClick={() => router.push("/home")} className="text-indigo-600 relative py-1 after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-indigo-600 dark:text-slate-300 dark:after:bg-indigo-400 dark:hover:text-white">Explore</button>
+                        <button onClick={() => router.push("/booking")} className="hover:text-slate-800 transition-colors dark:text-slate-300 dark:after:bg-indigo-400 dark:hover:text-white">My Viewings</button>
+                        <button onClick={() => router.push("/kyc")} className="hover:text-slate-800 transition-colors dark:text-slate-300 dark:after:bg-indigo-400 dark:hover:text-white">Verify KYC</button>
                     </div>
 
                     <div className="h-5 w-px bg-slate-200 hidden sm:block"></div>
@@ -39,11 +58,41 @@ export default function Navbar() {
                             <Bell className="w-5 h-5 dark:text-slate-300" />
                             <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-indigo-600 rounded-full"></span>
                         </button>
-                        <button className="p-2 dark:hover:bg-slate-700 text-slate-500 hover:bg-slate-100 rounded-full transition-colors">
-                            <Settings className="w-5 h-5 dark:text-slate-300" />
-                        </button>
-                        <div className="w-7 h-7 rounded-full overflow-hidden border border-slate-200 cursor-pointer">
-                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" alt="User Avatar" className="w-full h-full object-cover" />
+
+                        {/* Profile dropdown */}
+                        <div className="relative" ref={menuRef}>
+                            <button
+                                onClick={() => setMenuOpen((prev) => !prev)}
+                                className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 flex items-center justify-center cursor-pointer"
+                            >
+                                <UserIcon className="w-4 h-4 text-slate-500 dark:text-slate-300" />
+                            </button>
+
+                            {menuOpen && (
+                                <div className="absolute right-0 top-11 w-48 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl shadow-lg z-40 overflow-hidden">
+                                    <div className="py-1">
+                                        <button
+                                            onClick={() => { setMenuOpen(false); router.push("/profile"); }}
+                                            className="w-full text-left px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                        >
+                                            Profile & Settings
+                                        </button>
+                                        <button
+                                            onClick={() => { setMenuOpen(false); router.push("/kyc"); }}
+                                            className="w-full text-left px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                        >
+                                            KYC Verification
+                                        </button>
+                                        <div className="border-t border-slate-100 dark:border-slate-800">
+                                            <LogoutButton
+                                                label="Sign Out"
+                                                showIcon={false}
+                                                className="w-full text-left px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

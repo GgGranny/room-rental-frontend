@@ -1,6 +1,6 @@
 "use client";
 
-import { Facility } from "../types/properties";
+import { Facility } from "@/app/types/properties";
 import { Wifi, Utensils, Building, Wind } from "lucide-react";
 
 interface FacilitiesCardProps {

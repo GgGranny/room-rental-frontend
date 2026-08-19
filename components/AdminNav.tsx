@@ -3,6 +3,9 @@
 import { Bell, HelpCircle, Search } from 'lucide-react'
 import Image from 'next/image'
 import React, { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { useLogout } from '@/app/hooks/useAuth'
 
 type PopupTypes = "notification" | "profile"
 
@@ -11,6 +14,19 @@ export default function AdminNav() {
     const popupRef = useRef<HTMLDivElement>(null);
     const notificationBtnRef = useRef<HTMLButtonElement>(null);
     const profileBtnRef = useRef<HTMLButtonElement>(null);
+    const router = useRouter();
+    const logoutMutation = useLogout();
+
+    const handleLogout = async () => {
+        try {
+            await logoutMutation.mutateAsync();
+            toast.success("Signed out");
+        } catch (error) {
+            console.error("Logout failed:", error);
+        } finally {
+            router.push("/login");
+        }
+    };
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -112,13 +128,17 @@ export default function AdminNav() {
                                     <p className="text-xs text-slate-400 mt-0.5">admin@example.com</p>
                                 </div>
                                 <div className="py-1">
-                                    <button className="w-full text-left px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900">
+                                    <button
+                                        onClick={() => { setPopup(null); router.push("/profile"); }}
+                                        className="w-full text-left px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900"
+                                    >
                                         Profile Settings
                                     </button>
-                                    <button className="w-full text-left px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900">
-                                        Preferences
-                                    </button>
-                                    <button className="w-full text-left px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 border-t border-slate-100 dark:border-slate-800">
+                                    <button
+                                        onClick={handleLogout}
+                                        disabled={logoutMutation.isPending}
+                                        className="w-full text-left px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 border-t border-slate-100 dark:border-slate-800 disabled:opacity-50"
+                                    >
                                         Sign Out
                                     </button>
                                 </div>

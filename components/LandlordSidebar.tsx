@@ -5,17 +5,16 @@ import { usePathname, useRouter } from "next/navigation";
 import {
     LayoutDashboard,
     Building2,
-    MessageSquare,
     Settings,
     Calendar,
-    BarChart3,
     Plus,
     Menu,
     ChevronDown,
     List,
     PlusCircle,
-    Tags,
+    Sparkles,
 } from "lucide-react";
+import LogoutButton from "./LogoutButton";
 
 interface SidebarProps {
     className?: string;
@@ -52,13 +51,11 @@ export default function LandlordSidebar({ className = "", collapsed, setCollapse
             subItems: [
                 { label: "All Properties", icon: List, href: "/landlord/properties/all" },
                 { label: "Add Property", icon: PlusCircle, href: "/landlord/properties/add" },
-                { label: "Categories", icon: Tags, href: "/landlord/properties/categories" },
             ],
         },
-        { label: "Bookings", icon: Calendar, href: "/landlord/bookings" },
-        { label: "Analytics", icon: BarChart3, href: "/landlord/analytics" },
-        { label: "Messages", icon: MessageSquare, href: "/landlord/messages" },
-        { label: "Settings", icon: Settings, href: "/settings/profile" },
+        { label: "Schedules", icon: Calendar, href: "/landlord/schedules" },
+        { label: "Featured", icon: Sparkles, href: "/landlord/featured" },
+        { label: "Settings", icon: Settings, href: "/profile" },
     ];
 
     // Accurate sub-route and strict match evaluator
@@ -173,7 +170,7 @@ export default function LandlordSidebar({ className = "", collapsed, setCollapse
             </div>
 
             {/* Bottom Dynamic Callout / Action Trigger */}
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-900/60">
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-900/60 space-y-2">
                 {collapsed ? (
                     <button
                         onClick={() => setCollapsed(false)}
@@ -188,6 +185,10 @@ export default function LandlordSidebar({ className = "", collapsed, setCollapse
                         <span className="whitespace-nowrap">List New Property</span>
                     </button>
                 )}
+                <LogoutButton
+                    label={collapsed ? "" : "Sign Out"}
+                    className={`w-full flex items-center gap-2 justify-center py-2.5 px-4 rounded-xl text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/60 hover:text-slate-900 dark:hover:text-slate-200 transition-colors ${collapsed ? "px-0" : ""}`}
+                />
             </div>
         </aside>
     );

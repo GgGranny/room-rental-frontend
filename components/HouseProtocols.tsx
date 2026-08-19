@@ -1,6 +1,6 @@
 "use client";
 
-import { Protocol } from "../types/properties";
+import { Protocol } from "@/app/types/properties";
 import { Ban, Moon, Dog } from "lucide-react";
 
 interface HouseProtocolsProps {

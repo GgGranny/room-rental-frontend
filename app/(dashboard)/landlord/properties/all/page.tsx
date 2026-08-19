@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
     Search,
@@ -25,13 +25,12 @@ export default function PropertiesPage() {
     const { data: response, isLoading, isError, error } = useGetAllProperty();
     const deleteProperty = useDeleteProperty();
 
+    console.log("property data: ", response);
     const properties: any[] = response?.data ?? [];
 
-    const filtered = properties.filter(
-        (p) =>
-            p.propertyName.toLowerCase().includes(query.toLowerCase()) ||
-            p.city.toLowerCase().includes(query.toLowerCase()) ||
-            p.district.toLowerCase().includes(query.toLowerCase())
+    const filtered = properties.filter((p) =>
+        p.propertyName?.toLowerCase().includes(query.toLowerCase()) ||
+        p.country?.toLowerCase().includes(query.toLowerCase())
     );
 
     const activeCount = properties.filter((p) => p.propertyStatus === "ACTIVE").length;
@@ -174,7 +173,7 @@ export default function PropertiesPage() {
                                 <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 min-w-0">
                                     <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-400" />
                                     <span className="truncate">
-                                        {property.city}, {property.district}
+                                        {property.country || "—"}
                                     </span>
                                 </div>
 

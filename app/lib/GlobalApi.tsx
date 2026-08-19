@@ -6,7 +6,9 @@ type RequestOptions = {
     headers?: Record<string, string>;
 }
 
-async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
+let isRefreshing = false;
+
+async function request<T>(endpoint: string, options: RequestOptions = {}, retryCount = 0): Promise<T> {
     const { method = 'GET', body, headers = {} } = options;
 
     const isFormData = body instanceof FormData;
@@ -24,13 +26,19 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     }
 
     const rs = await fetch(`${BBASE_URL}/${endpoint}`, config);
-    if (rs.status === 401 || rs.status === 403) {
-        const refreshTokenResponse = await fetch(`${BBASE_URL}/auth/refresh`, {
-            method: "POST",
-            credentials: "include",
-        });
-        if (refreshTokenResponse.ok) {
-            return request<T>(endpoint, options);
+    if ((rs.status === 401 || rs.status === 403) && retryCount === 0 && !isRefreshing) {
+        isRefreshing = true;
+        try {
+            const refreshTokenResponse = await fetch(`${BBASE_URL}/auth/refresh`, {
+                method: "POST",
+                credentials: "include",
+            });
+            if (refreshTokenResponse.ok) {
+                isRefreshing = false;
+                return request<T>(endpoint, options, 1);
+            }
+        } finally {
+            isRefreshing = false;
         }
     }
 

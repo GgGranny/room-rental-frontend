@@ -1,8 +1,23 @@
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { RoomService } from "../services/roomService";
+import { RoomService, RoomSearchParams } from "../services/roomService";
 
 
 const Room_ID = "ROOM";
+
+export function useRecommendedRooms() {
+    return useQuery({
+        queryKey: [Room_ID, "recommended"],
+        queryFn: () => RoomService.getRecommendedRooms(),
+    });
+}
+
+export function useSearchRooms(params: RoomSearchParams, enabled = true) {
+    return useQuery({
+        queryKey: [Room_ID, "search", params],
+        queryFn: () => RoomService.searchRooms(params),
+        enabled,
+    });
+}
 
 export function useSaveRoom() {
     const queryClient = useQueryClient();

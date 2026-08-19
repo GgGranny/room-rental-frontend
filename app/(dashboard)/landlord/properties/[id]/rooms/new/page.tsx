@@ -4,8 +4,9 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Building2, CheckCircle2, CircleDollarSign, House, MapPin, Sparkles } from 'lucide-react';
+import { ArrowLeft, Building2, CheckCircle2, CircleDollarSign, House, MapPin, ShieldCheck, Sparkles } from 'lucide-react';
 import { useSaveRoom } from '@/app/hooks/useRoom';
+import { useMyKyc } from '@/app/hooks/useAuth';
 
 const Map = dynamic(() => import('@/components/Map'), { ssr: false });
 
@@ -59,6 +60,13 @@ export default function NewRoomPage() {
     const [selectedImages, setSelectedImages] = useState<File[]>([]);
     const [selectedPosition, setSelectedPosition] = useState<{ lat: number; lng: number }>({ lat: 7.2906, lng: 80.6337 });
     const { mutate, isPending } = useSaveRoom();
+    const { data: kycResponse, isLoading: isKycLoading } = useMyKyc();
+    const kycStatus = (kycResponse as { data?: { kycStatus?: string } } | undefined)?.data?.kycStatus;
+    const canCreateRoom = kycStatus === 'APPROVED';
+
+    useEffect(() => {
+        console.log('KYC status:', kycStatus, 'Can create room:', canCreateRoom);
+    }, [kycStatus, canCreateRoom]);
 
     const steps = [
         { title: 'Basic details', description: 'Name, price and room setup' },
@@ -149,11 +157,6 @@ export default function NewRoomPage() {
 
         if (form.address?.trim()) payload.address = form.address.trim();
 
-        // City/district/province are part of DTO — include if present on form
-        if ((form as any).city) payload.city = (form as any).city;
-        if ((form as any).district) payload.district = (form as any).district;
-        if ((form as any).province) payload.province = (form as any).province;
-
         // Coordinates from map selection
         if (selectedPosition?.lat !== undefined && selectedPosition?.lng !== undefined) {
             payload.latitude = selectedPosition.lat;
@@ -178,6 +181,23 @@ export default function NewRoomPage() {
             },
         });
     };
+
+    if (isKycLoading) {
+        return <div className="flex min-h-[60vh] items-center justify-center gap-2 text-sm text-slate-500"><span className="h-4 w-4 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />Checking KYC status...</div>;
+    }
+
+    if (!canCreateRoom) {
+        const message = kycStatus === 'PENDING'
+            ? 'Your KYC is currently under review. You can post a room after your KYC has been verified.'
+            : kycStatus === 'REJECTED'
+                ? 'Your KYC has not been verified. Please update and resubmit your KYC before posting a room.'
+                : 'KYC verification is required before you can post a room. Please complete and verify your KYC first.';
+        return <div className="mx-auto max-w-xl px-4 py-12 text-center">
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-900/60 dark:bg-amber-950/30">
+                <ShieldCheck className="mx-auto h-9 w-9 text-amber-600" />
+                <h1 className="mt-3 text-xl font-bold">KYC verification required</h1>
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{message}</p><Link href="/landlord/kyc" className="mt-5 inline-flex rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white">{kycStatus ? 'View KYC status' : 'Complete KYC'}</Link></div></div>
+    }
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 px-4 py-8 text-slate-900 dark:text-slate-100">

@@ -47,7 +47,15 @@ export default function Login() {
             localStorage.setItem("userId", response.data.userId);
             localStorage.setItem("landlordId", response.data.landlordId);
 
-            router.push("/home")
+            // Role-based redirect
+            const role = response.data.role;
+            if (role === "ROLE_LANDLORD") {
+                router.push("/landlord");
+            } else if (role === "ROLE_ADMIN") {
+                router.push("/admin");
+            } else {
+                router.push("/home");
+            }
             console.log("Login successful:", response);
         } catch (error) {
             toast.error("Login failed");

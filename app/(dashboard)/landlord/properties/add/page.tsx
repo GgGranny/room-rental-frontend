@@ -13,7 +13,6 @@ import {
 import Link from "next/link";
 import { ChangeEvent, FormEvent, useState } from "react";
 import { toast } from "sonner";
-import Map from "@/components/Map";
 
 export enum PropertyStatus {
     ACTIVE = "ACTIVE",
@@ -26,10 +25,6 @@ export interface PropertyRequest {
     landlordId: string;
     propertyStatus: PropertyStatus;
     description: string;
-    city: string;
-    district: string;
-    province: string;
-    zipCode: string;
     country: string;
 }
 
@@ -38,18 +33,14 @@ const initialFormState: PropertyRequest = {
     landlordId: "",
     propertyStatus: PropertyStatus.ACTIVE,
     description: "",
-    city: "",
-    district: "",
-    province: "",
-    zipCode: "",
     country: "",
 };
 
 export default function AddPropertyPage() {
     const [form, setForm] = useState<PropertyRequest>(initialFormState);
-    const [selectedPosition, setSelectedPosition] = useState<{ lat: number; lng: number }>({ lat: 7.2906, lng: 80.6337 });
     const [isSaved, setIsSaved] = useState(false);
     const [file, setFile] = useState<File | null>(null);
+
     const propertyMutation = useCreateProperty();
 
     const updateField = <K extends keyof PropertyRequest>(
@@ -64,48 +55,83 @@ export default function AddPropertyPage() {
         }));
     };
 
-    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (
+        event: FormEvent<HTMLFormElement>
+    ) => {
         event.preventDefault();
+
         const landlordId = localStorage.getItem("landlordId");
+
         if (!landlordId) {
-            toast.error("Your landlord profile is not available. Please sign in again.");
+            toast.error(
+                "Your landlord profile is not available. Please sign in again."
+            );
             return;
         }
-        const propertyData: any = {
-            ...form,
+
+        // Explicitly construct the payload.
+        // Only these fields will be sent to the backend.
+        const propertyData: PropertyRequest = {
+            propertyName: form.propertyName,
             landlordId,
-        }
+            propertyStatus: form.propertyStatus,
+            description: form.description,
+            country: form.country,
+        };
+
         const formData = new FormData();
-        formData.append("propertyData", JSON.stringify(propertyData));
-        if (file) formData.append("propertyThumbnail", file);
+
+        formData.append(
+            "propertyData",
+            JSON.stringify(propertyData)
+        );
+
+        if (file) {
+            formData.append("propertyThumbnail", file);
+        }
+
         try {
             await propertyMutation.mutateAsync(formData);
+
             setIsSaved(true);
+
             toast.success("Property Saved Successfully");
         } catch (error) {
             console.error(error);
+            toast.error("Failed to save property.");
         }
     };
 
     const handleReset = () => {
-        setForm(initialFormState);
+        setForm({
+            ...initialFormState,
+            landlordId: "",
+        });
+
+        setFile(null);
         setIsSaved(false);
     };
 
-    const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = (
+        event: ChangeEvent<HTMLInputElement>
+    ) => {
         const fileList = event.target.files;
+
         if (fileList && fileList.length > 0) {
             setFile(fileList[0]);
+            setIsSaved(false);
         }
-    }
+    };
 
     return (
         <div className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-6xl space-y-6">
+
+                {/* Header */}
                 <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 dark:border-slate-800 md:flex-row md:items-center md:justify-between">
                     <div>
                         <Link
-                        href="/landlord/properties/all"
+                            href="/landlord/properties/all"
                             className="mb-3 inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-indigo-600"
                         >
                             <ArrowLeft className="h-4 w-4" />
@@ -129,11 +155,13 @@ export default function AddPropertyPage() {
                     )}
                 </header>
 
+                {/* Form */}
                 <form
                     onSubmit={handleSubmit}
                     className="grid gap-6 lg:grid-cols-[1fr_320px]"
                 >
                     <div className="space-y-6">
+
                         {/* Property Details */}
                         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                             <div className="mb-5 flex items-center gap-3">
@@ -153,6 +181,8 @@ export default function AddPropertyPage() {
                             </div>
 
                             <div className="grid gap-4 md:grid-cols-2">
+
+                                {/* Property Name */}
                                 <label className="flex flex-col gap-2 md:col-span-2">
                                     <span className="text-xs font-semibold">
                                         Property Name
@@ -172,6 +202,7 @@ export default function AddPropertyPage() {
                                     />
                                 </label>
 
+                                {/* Property Status */}
                                 <label className="flex flex-col gap-2 md:col-span-2">
                                     <span className="text-xs font-semibold">
                                         Property Status
@@ -215,95 +246,30 @@ export default function AddPropertyPage() {
                                     </h2>
 
                                     <p className="text-xs text-slate-500">
-                                        Property location information.
+                                        Property country.
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <input
-                                    required
-                                    placeholder="City"
-                                    value={form.city}
-                                    onChange={(e) =>
-                                        updateField("city", e.target.value)
-                                    }
-                                    className="h-11 rounded-lg border px-3 text-sm"
-                                />
+                            {/* Country Only */}
+                            <label className="flex flex-col gap-2">
+                                <span className="text-xs font-semibold">
+                                    Country
+                                </span>
 
                                 <input
                                     required
-                                    placeholder="District"
-                                    value={form.district}
-                                    onChange={(e) =>
-                                        updateField("district", e.target.value)
-                                    }
-                                    className="h-11 rounded-lg border px-3 text-sm"
-                                />
-
-                                <input
-                                    required
-                                    placeholder="Province"
-                                    value={form.province}
-                                    onChange={(e) =>
-                                        updateField("province", e.target.value)
-                                    }
-                                    className="h-11 rounded-lg border px-3 text-sm"
-                                />
-
-                                <input
-                                    required
-                                    placeholder="Zip Code"
-                                    value={form.zipCode}
-                                    onChange={(e) =>
-                                        updateField("zipCode", e.target.value)
-                                    }
-                                    className="h-11 rounded-lg border px-3 text-sm"
-                                />
-
-                                <input
-                                    required
-                                    placeholder="Country"
+                                    placeholder="Nepal"
                                     value={form.country}
                                     onChange={(e) =>
-                                        updateField("country", e.target.value)
+                                        updateField(
+                                            "country",
+                                            e.target.value
+                                        )
                                     }
-                                    className="h-11 rounded-lg border px-3 text-sm md:col-span-2"
+                                    className="h-11 rounded-lg border px-3 text-sm"
                                 />
-                            </div>
-
-                            <div className="mt-6 space-y-4">
-                                <div className="grid gap-4 sm:grid-cols-2">
-                                    <label className="flex flex-col gap-2">
-                                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                            Latitude
-                                        </span>
-                                        <input
-                                            readOnly
-                                            value={selectedPosition.lat.toFixed(6)}
-                                            className="h-11 rounded-lg border bg-slate-50 px-3 text-sm text-slate-700 outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
-                                        />
-                                    </label>
-                                    <label className="flex flex-col gap-2">
-                                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                            Longitude
-                                        </span>
-                                        <input
-                                            readOnly
-                                            value={selectedPosition.lng.toFixed(6)}
-                                            className="h-11 rounded-lg border bg-slate-50 px-3 text-sm text-slate-700 outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
-                                        />
-                                    </label>
-                                </div>
-
-                                <div className="h-[320px] overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900">
-                                    <Map
-                                        lat={selectedPosition.lat}
-                                        lng={selectedPosition.lng}
-                                        onPositionChange={(pos) => setSelectedPosition(pos)}
-                                    />
-                                </div>
-                            </div>
+                            </label>
                         </section>
 
                         {/* Description */}
@@ -331,6 +297,8 @@ export default function AddPropertyPage() {
 
                     {/* Sidebar */}
                     <aside className="space-y-6">
+
+                        {/* Thumbnail */}
                         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                             <div className="mb-4 flex items-center gap-3">
                                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
@@ -350,11 +318,15 @@ export default function AddPropertyPage() {
 
                             <label className="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border border-dashed">
                                 <ImagePlus className="h-8 w-8 text-slate-400" />
+
                                 <span className="text-sm font-semibold">
-                                    Add Thumbnail
+                                    {file
+                                        ? file.name
+                                        : "Add Thumbnail"}
                                 </span>
+
                                 <input
-                                    onChange={(event) => handleFileChange(event)}
+                                    onChange={handleFileChange}
                                     type="file"
                                     accept="image/*"
                                     className="sr-only"
@@ -362,43 +334,68 @@ export default function AddPropertyPage() {
                             </label>
                         </section>
 
+                        {/* Property Summary */}
                         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                             <h2 className="mb-4 text-sm font-bold">
                                 Property Summary
                             </h2>
 
                             <div className="space-y-3 text-sm">
-                                <div className="flex justify-between">
-                                    <span>Property</span>
-                                    <span className="font-semibold">
-                                        {form.propertyName || "Not set"}
+
+                                {/* Property */}
+                                <div className="flex justify-between gap-4">
+                                    <span className="text-slate-500">
+                                        Property
+                                    </span>
+
+                                    <span className="max-w-[180px] truncate text-right font-semibold">
+                                        {form.propertyName ||
+                                            "Not set"}
                                     </span>
                                 </div>
 
-                                <div className="flex justify-between">
-                                    <span>Status</span>
+                                {/* Status */}
+                                <div className="flex justify-between gap-4">
+                                    <span className="text-slate-500">
+                                        Status
+                                    </span>
+
                                     <span className="font-semibold">
                                         {form.propertyStatus}
                                     </span>
                                 </div>
 
-                                <div className="flex justify-between">
-                                    <span>City</span>
+                                {/* Country */}
+                                <div className="flex justify-between gap-4">
+                                    <span className="text-slate-500">
+                                        Country
+                                    </span>
+
                                     <span className="font-semibold">
-                                        {form.city || "Not set"}
+                                        {form.country ||
+                                            "Not set"}
                                     </span>
                                 </div>
                             </div>
 
                             <div className="mt-5 grid gap-3">
+
+                                {/* Save */}
                                 <button
                                     type="submit"
-                                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-bold text-white"
+                                    disabled={
+                                        propertyMutation.isPending
+                                    }
+                                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                     <Save className="h-4 w-4" />
-                                    Save Property
+
+                                    {propertyMutation.isPending
+                                        ? "Saving..."
+                                        : "Save Property"}
                                 </button>
 
+                                {/* Reset */}
                                 <button
                                     type="button"
                                     onClick={handleReset}

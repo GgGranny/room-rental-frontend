@@ -1,6 +1,6 @@
 "use client";
 
-import { PropertyStats as StatsType } from "../types/properties";
+import { PropertyStats as StatsType } from "@/app/types/properties";
 
 interface PropertyStatsProps {
     stats: StatsType;

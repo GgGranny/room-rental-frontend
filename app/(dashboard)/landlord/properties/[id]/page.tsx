@@ -74,10 +74,6 @@ export interface PropertyDetail {
     propertyStatus: "ACTIVE" | "INACTIVE" | "PENDING" | string;
     description: string;
     thumbnailUrl: string;
-    city: string;
-    district: string;
-    province: string;
-    zipCode: string;
     country: string;
     landlord: Landlord;
     rooms: Room[];
@@ -178,7 +174,7 @@ export default function PropertyDetailPage() {
                     </h1>
                     <p className="flex items-center gap-1 text-xs font-medium text-white/80 mt-1.5">
                         <MapPin className="w-3.5 h-3.5" />
-                        {property.city}, {property.district}, {property.province}, {property.country} — {property.zipCode}
+                        {property.country}
                     </p>
                 </div>
             </div>

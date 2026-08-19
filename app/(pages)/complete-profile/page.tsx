@@ -45,17 +45,20 @@ export default function MultiStepOnboarding() {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleNext = () => {
+    const handleNext = async () => {
         if (step < 3) setStep((prev) => prev + 1);
         else {
             try {
-                const response: any = completeProfileMutation.mutate(formData);
-                if (response?.data?.role === "ROLE_USER") {
-                    router.push("/home");
-                } else if (response?.data?.role === "ROLE_LANDLORD") {
-                    router.push("/landlord");
-                }
+                const response: any = await completeProfileMutation.mutateAsync(formData);
                 console.log("Profile completion response:", response.data);
+                const role = response?.data?.role;
+                if (role === "ROLE_USER") {
+                    router.push("/home");
+                } else if (role === "ROLE_LANDLORD") {
+                    router.push("/landlord");
+                } else if (role === "ROLE_ADMIN") {
+                    router.push("/admin");
+                }
             } catch (error) {
                 console.error("Error completing profile:", error);
             }

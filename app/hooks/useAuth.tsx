@@ -79,3 +79,21 @@ export function useSubmitKyc() {
         }
     });
 }
+
+export function useLogout() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: () => authService.logout(),
+        onSuccess: () => {
+            queryClient.clear();
+        },
+    });
+}
+
+export function useMyKyc() {
+    return useQuery({
+        queryKey: ["myKyc"],
+        queryFn: () => authService.getMyKyc(),
+        retry: false,
+    });
+}
