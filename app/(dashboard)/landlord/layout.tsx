@@ -2,6 +2,7 @@
 
 import AdminNav from "@/components/AdminNav";
 import LandlordSidebar from "@/components/LandlordSidebar";
+import PushNotifications from "@/components/PushNotifications";
 import React from "react";
 
 export default function LandlordLayout({ children }: { children: React.ReactNode }) {
@@ -15,6 +16,7 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
                     {children}
                 </main>
             </div>
+            <PushNotifications />
         </div>
     );
 };
