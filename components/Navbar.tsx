@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "./ToggleTheme";
 import LogoutButton from "./LogoutButton";
+import NotificationBell from "./NotificationBell";
 
 export default function Navbar() {
     const router = useRouter();
@@ -54,10 +55,7 @@ export default function Navbar() {
                     <div className="h-5 w-px bg-slate-200 hidden sm:block"></div>
 
                     <div className="flex items-center gap-2">
-                        <button className="p-2 dark:hover:bg-slate-700 text-slate-500 hover:bg-slate-100 rounded-full transition-colors relative">
-                            <Bell className="w-5 h-5 dark:text-slate-300" />
-                            <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-indigo-600 rounded-full"></span>
-                        </button>
+                        <NotificationBell />
 
                         {/* Profile dropdown */}
                         <div className="relative" ref={menuRef}>

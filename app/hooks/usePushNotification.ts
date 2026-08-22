@@ -115,11 +115,13 @@ export function usePushNotification() {
                 const body = payload.notification?.body || "";
                 toast(title, {
                     description: body,
+                    duration: 8000,
                     action: {
                         label: "View",
                         onClick: () => router.push(navigateByAction(data.action)),
                     },
                 });
+                window.dispatchEvent(new Event("room-notification"));
             });
         })();
         return () => unsub?.();

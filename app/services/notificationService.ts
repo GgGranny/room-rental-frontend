@@ -5,4 +5,16 @@ import { apiClient } from "../lib/GlobalApi";
 export const notificationService = {
     registerToken: (token: string) => apiClient.post("notifications/token", { token }),
     removeToken: () => apiClient.delete("notifications/token"),
+    getAll: () => apiClient.get<{ data: AppNotification[] }>("notifications"),
+    markRead: (id: string) => apiClient.patch(`notifications/${id}/read`, {}),
+};
+
+export type AppNotification = {
+    id: string;
+    title: string;
+    body: string;
+    type: string;
+    referenceId?: string;
+    read: boolean;
+    createdAt: string;
 };
