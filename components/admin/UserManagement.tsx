@@ -1,0 +1,15 @@
+"use client";
+
+import { useAdminUsers, useToggleUserStatus } from "@/app/hooks/useAdmin";
+import { AdminUserResponse } from "@/app/services/adminService";
+import { useState } from "react";
+import { toast } from "sonner";
+
+export default function UserManagement({ role, title }: { role?: AdminUserResponse["role"]; title: string }) {
+    const { data = [], isLoading, isError, refetch } = useAdminUsers();
+    const updateStatus = useToggleUserStatus();
+    const [query, setQuery] = useState("");
+    const users = data.filter(user => (!role || user.role === role) && `${user.email} ${user.fname ?? ""} ${user.lname ?? ""}`.toLowerCase().includes(query.toLowerCase()));
+    const toggle = async (user: AdminUserResponse) => { try { await updateStatus.mutateAsync({ userId: user.userId, active: !user.active }); toast.success(`Account ${user.active ? "blocked" : "reactivated"}`); } catch { toast.error("Unable to update account status"); } };
+    return <section className="space-y-5"><div className="flex flex-wrap items-end justify-between gap-3"><div><h1 className="text-2xl font-bold">{title}</h1><p className="mt-1 text-sm text-slate-500">Review accounts and update active status.</p></div><button onClick={() => refetch()} className="rounded-lg border px-3 py-2 text-sm">Refresh</button></div><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search name or email" className="w-full max-w-sm rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900" />{isLoading ? <p className="text-sm text-slate-500">Loading users…</p> : isError ? <p className="text-sm text-rose-600">Unable to load users. <button onClick={() => refetch()} className="underline">Retry</button></p> : users.length === 0 ? <p className="rounded-xl border border-dashed p-8 text-center text-sm text-slate-500">No matching accounts found.</p> : <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800"><table className="w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-500 dark:bg-slate-900"><tr><th className="p-3">User</th><th className="p-3">Role</th><th className="p-3">KYC</th><th className="p-3">Status</th><th className="p-3" /></tr></thead><tbody>{users.map(user => <tr key={user.userId} className="border-t border-slate-100 dark:border-slate-800"><td className="p-3"><div className="font-medium">{[user.fname, user.lname].filter(Boolean).join(" ") || "—"}</div><div className="text-xs text-slate-500">{user.email}</div></td><td className="p-3">{user.role.replace("ROLE_", "")}</td><td className="p-3">{user.kycStatus ?? "Not submitted"}</td><td className="p-3">{user.active ? "Active" : "Blocked"}</td><td className="p-3 text-right">{user.role !== "ROLE_ADMIN" && <button disabled={updateStatus.isPending} onClick={() => toggle(user)} className="rounded-lg border px-3 py-1.5 text-xs font-medium disabled:opacity-50">{user.active ? "Block" : "Reactivate"}</button>}</td></tr>)}</tbody></table></div>}</section>;
+}

@@ -5,6 +5,7 @@ const ROLE_ROUTES: Record<string, string[]> = {
         "/landlord",
         "/landlord/properties/all",
         "/profile",
+        "/settings",
         "/landlord/properties",
         "/landlord/bookings",
         "/landlord/schedule",
@@ -15,12 +16,14 @@ const ROLE_ROUTES: Record<string, string[]> = {
     ROLE_ADMIN: [
         "/admin",
         "/profile",
+        "/settings",
     ],
 
     ROLE_USER: [
         "/home",
         "/booking",
         "/profile",
+        "/settings",
         "/kyc",
         "/room",
     ],

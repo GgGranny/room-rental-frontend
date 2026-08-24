@@ -79,6 +79,11 @@ export type AdminPropertyResponse = {
 
 type ApiResponse<T> = { data: T };
 
+type AdminKycEnvelope = {
+    user?: AdminKycRecord["user"];
+    kyc?: Omit<AdminKycRecord, "user"> | null;
+};
+
 function unwrap<T>(resp: ApiResponse<T> | T): T {
     return (resp as ApiResponse<T>)?.data ?? (resp as T);
 }
@@ -93,8 +98,14 @@ export const adminService = {
     setUserActiveStatus: async (userId: string, active: boolean): Promise<AdminUserResponse> =>
         unwrap<AdminUserResponse>(await apiClient.patch<ApiResponse<AdminUserResponse>>(`admin/users/${userId}/status/${active}`, {})),
 
-    getAllKycs: async (): Promise<AdminKycRecord[]> =>
-        unwrap<AdminKycRecord[]>(await apiClient.get<ApiResponse<AdminKycRecord[]>>("admin/kyc")),
+    // The existing endpoint returns one `{ user, kyc }` entry per user, including
+    // users without KYC. Present only submitted KYC records to the review UI.
+    getAllKycs: async (): Promise<AdminKycRecord[]> => {
+        const records = unwrap<AdminKycEnvelope[]>(await apiClient.get<ApiResponse<AdminKycEnvelope[]>>("admin/kyc"));
+        return records
+            .filter((record): record is AdminKycEnvelope & { kyc: Omit<AdminKycRecord, "user"> } => Boolean(record.kyc))
+            .map(record => ({ ...record.kyc, user: record.user }));
+    },
 
     moderateKyc: async (kycId: number, status: "APPROVED" | "REJECTED"): Promise<AdminKycRecord> =>
         unwrap<AdminKycRecord>(await apiClient.patch<ApiResponse<AdminKycRecord>>(`admin/kyc/${kycId}/${status}`, {})),

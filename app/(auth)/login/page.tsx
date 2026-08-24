@@ -42,11 +42,6 @@ export default function Login() {
         try {
             const response: any = await loginMutation.mutateAsync(data);
             toast.success("Login successful!");
-            localStorage.setItem("token", response.data.token);
-            localStorage.setItem("refreshToken", response.data.refreshToken);
-            localStorage.setItem("userId", response.data.userId);
-            localStorage.setItem("landlordId", response.data.landlordId);
-
             // Role-based redirect
             const role = response.data.role;
             if (role === "ROLE_LANDLORD") {

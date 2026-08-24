@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLogout } from "@/app/hooks/useAuth";
+import { notificationService } from "@/app/services/notificationService";
 
 type LogoutButtonProps = {
     className?: string;
@@ -21,6 +22,12 @@ export default function LogoutButton({
 
     const handleLogout = async () => {
         try {
+            // Best-effort: unregister this user's FCM tokens before logging out.
+            try {
+                await notificationService.removeToken();
+            } catch (e) {
+                console.warn("Failed to remove notification token:", e);
+            }
             await logoutMutation.mutateAsync();
             toast.success("Signed out");
         } catch (error) {
