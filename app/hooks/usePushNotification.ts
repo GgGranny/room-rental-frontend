@@ -13,6 +13,27 @@ type PermissionState = NotificationPermission | "unsupported";
 
 const SW_PATH = "/firebase-messaging-sw.js";
 
+// Client-side preference for push notifications (Settings → Preferences).
+// The server-side source of truth is whether an FCM token is registered for
+// the user; this flag only controls this browser/device.
+const PUSH_PREF_KEY = "roomease.push.enabled";
+
+export function isPushPreferenceEnabled(): boolean {
+    try {
+        return window.localStorage.getItem(PUSH_PREF_KEY) !== "off";
+    } catch {
+        return true;
+    }
+}
+
+export function setPushPreference(enabled: boolean) {
+    try {
+        window.localStorage.setItem(PUSH_PREF_KEY, enabled ? "on" : "off");
+    } catch {
+        // Storage unavailable — preference simply won't persist.
+    }
+}
+
 function navigateByAction(action?: string) {
     switch (action) {
         case "OPEN_VIEWING":
@@ -75,9 +96,10 @@ export function usePushNotification() {
     }, [obtainAndRegister]);
 
     // Once an authenticated user is present, silently re-register the token if
-    // permission was already granted (never prompts on its own).
+    // permission was already granted (never prompts on its own). Skipped when
+    // the user disabled push notifications in Preferences.
     useEffect(() => {
-        if (isSuccess && user && !registered) {
+        if (isSuccess && user && !registered && isPushPreferenceEnabled()) {
             // register() sets state only after awaited network calls complete,
             // so this is never a synchronous setState within the effect body.
             // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -103,13 +125,16 @@ export function usePushNotification() {
         }
     }, [obtainAndRegister]);
 
-    // Foreground messages -> in-app toast that navigates on click.
+    // Foreground messages -> in-app toast that navigates on click. Suppressed
+    // when push notifications are disabled in Preferences (history still updates).
     useEffect(() => {
         let unsub: (() => void) | undefined;
         (async () => {
             const messaging = await getFirebaseMessaging();
             if (!messaging) return;
             unsub = onMessage(messaging, (payload) => {
+                window.dispatchEvent(new Event("room-notification"));
+                if (!isPushPreferenceEnabled()) return;
                 const data = payload.data || {};
                 const title = payload.notification?.title || "RoomEase";
                 const body = payload.notification?.body || "";
@@ -121,7 +146,6 @@ export function usePushNotification() {
                         onClick: () => router.push(navigateByAction(data.action)),
                     },
                 });
-                window.dispatchEvent(new Event("room-notification"));
             });
         })();
         return () => unsub?.();

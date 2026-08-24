@@ -1,10 +1,11 @@
 'use client';
 
-import { Mutation, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authService } from "../services/authService";
 import { CompleteProfileType } from "../(pages)/complete-profile/page";
 const AUTH_KEY = "auth";
 const CURRENT_USER = "currentUser";
+const MY_PROFILE = "myProfile";
 
 
 // login hook
@@ -72,10 +73,12 @@ export function useCurrentUser() {
 export function useSubmitKyc() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (body: any) => authService.submitKyc(body),
+        mutationFn: (body: FormData) => authService.submitKyc(body),
         onSuccess: (data) => {
             console.log("KYC submission successful:", data);
-            queryClient.invalidateQueries({ queryKey: [AUTH_KEY] })
+            queryClient.invalidateQueries({ queryKey: [AUTH_KEY] });
+            queryClient.invalidateQueries({ queryKey: ["myKyc"] });
+            queryClient.invalidateQueries({ queryKey: [MY_PROFILE] });
         }
     });
 }
@@ -95,5 +98,38 @@ export function useMyKyc() {
         queryKey: ["myKyc"],
         queryFn: () => authService.getMyKyc(),
         retry: false,
+    });
+}
+
+// New API: authenticated user's own profile (navbar, profile & settings pages).
+export function useMyProfile() {
+    return useQuery({
+        queryKey: [MY_PROFILE],
+        queryFn: () => authService.getProfile(),
+        retry: false,
+    });
+}
+
+function invalidateProfile(queryClient: ReturnType<typeof useQueryClient>) {
+    queryClient.invalidateQueries({ queryKey: [MY_PROFILE] });
+    queryClient.invalidateQueries({ queryKey: [CURRENT_USER] });
+}
+
+// New API: update editable fields of the authenticated user's own profile.
+export function useUpdateProfile() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (body: { fname?: string; lname?: string; phoneNumber?: string; dateOfBirth?: string }) =>
+            authService.updateProfile(body),
+        onSuccess: () => invalidateProfile(queryClient),
+    });
+}
+
+// New API: upload/replace the authenticated user's own avatar image.
+export function useUploadAvatar() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (file: File) => authService.uploadAvatar(file),
+        onSuccess: () => invalidateProfile(queryClient),
     });
 }

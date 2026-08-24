@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import {
     User as UserIcon,
@@ -11,20 +11,14 @@ import {
     BadgeCheck,
     Home,
     ChevronRight,
+    Pencil,
+    Phone,
 } from "lucide-react";
-import { useCurrentUser } from "@/app/hooks/useAuth";
+import { useMyProfile } from "@/app/hooks/useAuth";
 import LogoutButton from "@/components/LogoutButton";
-
-type CurrentUser = {
-    userId?: string;
-    landlordId?: string;
-    role?: string;
-    fname?: string;
-    lname?: string;
-    email?: string;
-    Dob?: string;
-    isVerifird?: boolean;
-};
+import AvatarPicker from "@/components/settings/AvatarPicker";
+import ConfirmDialog from "@/components/settings/ConfirmDialog";
+import EditProfileModal from "@/components/settings/EditProfileModal";
 
 const roleLabel: Record<string, string> = {
     ROLE_USER: "Tenant",
@@ -33,59 +27,62 @@ const roleLabel: Record<string, string> = {
 };
 
 export default function ProfilePage() {
-    const { data, isPending, isError } = useCurrentUser();
-    const user = ((data as { data?: CurrentUser } | undefined)?.data ?? {}) as CurrentUser;
-
-    const fullName = [user.fname, user.lname].filter(Boolean).join(" ") || "Your account";
-    const initials =
-        [user.fname?.[0], user.lname?.[0]].filter(Boolean).join("").toUpperCase() || "U";
-    const verified = !!user.isVerifird;
+    const { data, isPending, isError } = useMyProfile();
+    const user = data?.data;
+    const [editOpen, setEditOpen] = useState(false);
+    const [signOutOpen, setSignOutOpen] = useState(false);
 
     if (isPending) {
         return (
-            <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-24 px-6 max-w-3xl mx-auto">
+            <div className="pt-24 px-6 max-w-3xl mx-auto" aria-busy="true">
                 <div className="h-40 rounded-3xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
                 <div className="mt-6 h-56 rounded-3xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
             </div>
         );
     }
 
-    if (isError) {
+    if (isError || !user) {
         return (
-            <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center px-6">
+            <div className="min-h-screen flex items-center justify-center px-6">
                 <p className="text-sm text-slate-500 dark:text-slate-400">Could not load your profile. Please try again.</p>
             </div>
         );
     }
 
+    const fullName = [user.fname, user.lname].filter(Boolean).join(" ") || "Your account";
+
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50 transition-colors duration-300">
+        <>
             <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 space-y-6">
                 {/* IDENTITY HEADER */}
                 <section className="bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-                        <div className="w-20 h-20 rounded-full bg-indigo-100 dark:bg-indigo-950 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-2xl font-black shrink-0">
-                            {initials}
-                        </div>
-                        <div className="space-y-1.5 min-w-0">
+                        <AvatarPicker size="lg" />
+                        <div className="space-y-1.5 min-w-0 flex-1">
                             <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white truncate">{fullName}</h1>
                             <div className="flex flex-wrap items-center gap-2">
                                 {user.role && (
-                                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">
+                                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 uppercase tracking-wider">
                                         {roleLabel[user.role] ?? user.role}
                                     </span>
                                 )}
-                                {verified ? (
-                                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                                {user.verified ? (
+                                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 uppercase tracking-wider flex items-center gap-1">
                                         <BadgeCheck className="w-3.5 h-3.5" /> Verified
                                     </span>
                                 ) : (
-                                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1">
                                         <ShieldAlert className="w-3.5 h-3.5" /> Unverified
                                     </span>
                                 )}
                             </div>
                         </div>
+                        <button
+                            onClick={() => setEditOpen(true)}
+                            className="inline-flex items-center justify-center gap-2 text-sm font-bold px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition-all self-start sm:self-center"
+                        >
+                            <Pencil className="w-4 h-4" /> Edit Profile
+                        </button>
                     </div>
                 </section>
 
@@ -94,10 +91,10 @@ export default function ProfilePage() {
                     <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Account Details</h2>
                     <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {[
-                            { icon: UserIcon, label: "First name", value: user.fname || "—" },
-                            { icon: UserIcon, label: "Last name", value: user.lname || "—" },
+                            { icon: UserIcon, label: "Full name", value: fullName },
                             { icon: Mail, label: "Email", value: user.email || "—" },
-                            { icon: Calendar, label: "Date of birth", value: user.Dob || "—" },
+                            { icon: Phone, label: "Phone", value: user.phoneNumber || "Not provided" },
+                            { icon: Calendar, label: "Date of birth", value: user.dateOfBirth || "—" },
                         ].map((row) => (
                             <div key={row.label} className="bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800 rounded-2xl p-4">
                                 <dt className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -111,9 +108,9 @@ export default function ProfilePage() {
 
                 {/* VERIFICATION / QUICK LINKS */}
                 <section className="bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 rounded-3xl p-2 shadow-sm">
-                    {!verified && (
+                    {!user.kycSubmitted && user.role !== "ROLE_ADMIN" && (
                         <Link
-                            href="/kyc"
+                            href={user.role === "ROLE_LANDLORD" ? "/landlord/kyc" : "/kyc"}
                             className="flex items-center justify-between gap-3 p-4 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors"
                         >
                             <div className="flex items-center gap-3">
@@ -147,13 +144,36 @@ export default function ProfilePage() {
 
                 {/* SIGN OUT */}
                 <div className="flex justify-end">
-                    <LogoutButton
-                        label="Sign out"
-                        showIcon
-                        className="inline-flex items-center gap-2 text-sm font-bold text-red-600 dark:text-red-400 border border-slate-200 dark:border-slate-800 hover:border-red-300 dark:hover:border-red-800 bg-white dark:bg-slate-900 px-4 py-2.5 rounded-xl transition-all"
-                    />
+                    <button
+                        onClick={() => setSignOutOpen(true)}
+                        className="inline-flex items-center gap-2 text-sm font-bold text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/60 hover:bg-red-50 dark:hover:bg-red-950/30 bg-white dark:bg-slate-900 px-4 py-2.5 rounded-xl transition-all"
+                    >
+                        Sign out
+                    </button>
                 </div>
             </main>
-        </div>
+
+            <EditProfileModal key={editOpen ? "open" : "closed"} open={editOpen} onClose={() => setEditOpen(false)} />
+
+            <ConfirmDialog
+                open={signOutOpen}
+                title="Are you sure you want to sign out?"
+                message="You will be returned to the login page."
+                destructive
+                onCancel={() => setSignOutOpen(false)}
+                onConfirm={() => setSignOutOpen(false)}
+                confirmSlot={
+                    // Existing logout flow: removes FCM token, clears auth cookies,
+                    // redirects to /login.
+                    <span onClick={() => setSignOutOpen(false)}>
+                        <LogoutButton
+                            label="Sign Out"
+                            showIcon={false}
+                            className="inline-flex items-center gap-2 text-sm font-bold px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white transition-all disabled:opacity-60"
+                        />
+                    </span>
+                }
+            />
+        </>
     );
 }

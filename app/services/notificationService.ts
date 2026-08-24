@@ -7,6 +7,7 @@ export const notificationService = {
     removeToken: () => apiClient.delete("notifications/token"),
     getAll: () => apiClient.get<{ data: AppNotification[] }>("notifications"),
     markRead: (id: string) => apiClient.patch(`notifications/${id}/read`, {}),
+    markAllRead: () => apiClient.patch("notifications/read-all", {}),
 };
 
 export type AppNotification = {

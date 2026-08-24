@@ -11,11 +11,32 @@ import {
     ArrowLeft,
     UploadCloud,
     Loader2,
+    Clock3,
+    CheckCircle2,
+    XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSubmitKyc, useCurrentUser, useMyKyc } from "@/app/hooks/useAuth";
 
 type FileSlot = "frontImage" | "backImage" | "selfieImage";
+
+type ExistingKyc = {
+    kycStatus?: "PENDING" | "APPROVED" | "REJECTED" | null;
+    firstName?: string;
+    lastName?: string;
+    middleName?: string | null;
+    dateOfBirth?: string;
+    gender?: string;
+    documentType?: string;
+    addressLine1?: string;
+    addressLine2?: string | null;
+    city?: string;
+    state?: string | null;
+    postalCode?: string;
+    country?: string;
+    phoneNumber?: string;
+    alternatePhone?: string | null;
+};
 
 const DOCUMENT_TYPES = [
     { value: "NATIONAL_ID", label: "National ID" },
@@ -31,7 +52,13 @@ export default function KycForm() {
     const [isSubmitted, setIsSubmitted] = useState(false);
     const submitKyc = useSubmitKyc();
     const { data: userData } = useCurrentUser();
-    const { data: kycResponse, isLoading: isKycLoading } = useMyKyc();
+    const { data: kycResponse } = useMyKyc();
+
+    // Previous submission (only present when a KYC record exists).
+    // PENDING/APPROVED block a new submission; REJECTED enables resubmission.
+    const existingKyc = (kycResponse as { data?: ExistingKyc } | undefined)?.data ?? null;
+    const kycStatus = existingKyc?.kycStatus ?? null;
+    const isRejected = kycStatus === "REJECTED";
 
     const [form, setForm] = useState({
         firstName: "",
@@ -56,16 +83,11 @@ export default function KycForm() {
         selfieImage: null,
     });
 
-    const inputRefs = {
-        frontImage: useRef<HTMLInputElement>(null),
-        backImage: useRef<HTMLInputElement>(null),
-        selfieImage: useRef<HTMLInputElement>(null),
-    };
-
     // Prefill legal name / DOB from the signed-in user (still editable for KYC).
     useEffect(() => {
         const u = (userData as { data?: { fname?: string; lname?: string; Dob?: string } } | undefined)?.data;
         if (!u) return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating form state from fetched profile data
         setForm((prev) => ({
             ...prev,
             firstName: prev.firstName || u.fname || "",
@@ -73,6 +95,31 @@ export default function KycForm() {
             dateOfBirth: prev.dateOfBirth || (u.Dob ? u.Dob.slice(0, 10) : ""),
         }));
     }, [userData]);
+
+    // Resubmission: prefill the form with the previous (rejected) submission so
+    // the user only corrects what failed. Documents are always re-uploaded.
+    useEffect(() => {
+        if (!isRejected || !existingKyc) return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating form state from fetched KYC record
+        setForm((prev) => ({
+            ...prev,
+            firstName: existingKyc.firstName || prev.firstName,
+            lastName: existingKyc.lastName || prev.lastName,
+            middleName: existingKyc.middleName ?? prev.middleName,
+            dateOfBirth: existingKyc.dateOfBirth?.slice(0, 10) || prev.dateOfBirth,
+            gender: existingKyc.gender || prev.gender,
+            documentType: existingKyc.documentType || prev.documentType,
+            addressLine1: existingKyc.addressLine1 || prev.addressLine1,
+            addressLine2: existingKyc.addressLine2 ?? prev.addressLine2,
+            city: existingKyc.city || prev.city,
+            state: existingKyc.state ?? prev.state,
+            postalCode: existingKyc.postalCode || prev.postalCode,
+            country: existingKyc.country || prev.country,
+            phoneNumber: existingKyc.phoneNumber || prev.phoneNumber,
+            alternatePhone: existingKyc.alternatePhone ?? prev.alternatePhone,
+        }));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isRejected, kycResponse]);
 
     const change = (field: keyof typeof form, value: string) =>
         setForm((prev) => ({ ...prev, [field]: value }));
@@ -132,7 +179,11 @@ export default function KycForm() {
         try {
             await submitKyc.mutateAsync(fd);
             setIsSubmitted(true);
-            toast.success("KYC submitted. We'll review your documents shortly.");
+            toast.success(
+                isRejected
+                    ? "KYC resubmitted successfully and is now under review."
+                    : "KYC submitted. We'll review your documents shortly."
+            );
         } catch (err) {
             toast.error(err instanceof Error ? err.message : "KYC submission failed. Please try again.");
         }
@@ -152,9 +203,33 @@ export default function KycForm() {
                 <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-950/40 rounded-full flex items-center justify-center mx-auto text-emerald-600 dark:text-emerald-400 mb-6">
                     <Check className="w-8 h-8 stroke-[2.5]" />
                 </div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">KYC Submitted</h2>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                    {isRejected ? "KYC Resubmitted" : "KYC Submitted"}
+                </h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-2 leading-relaxed max-w-sm mx-auto">
-                    Your verification is now pending review. You&apos;ll be notified once an administrator approves it.
+                    {isRejected
+                        ? "Your resubmission is now under review. You'll be notified once an administrator makes a decision."
+                        : "Your verification is now pending review. You'll be notified once an administrator approves it."}
+                </p>
+            </div>
+        );
+    }
+
+    // PENDING / APPROVED: no new submission possible — show status instead of the form.
+    if (kycStatus === "PENDING" || kycStatus === "APPROVED") {
+        const approved = kycStatus === "APPROVED";
+        return (
+            <div className="max-w-xl mx-auto bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-8 text-center shadow-xl shadow-slate-100/50 dark:shadow-none my-24">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 ${approved ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400" : "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400"}`}>
+                    {approved ? <CheckCircle2 className="w-8 h-8" /> : <Clock3 className="w-8 h-8" />}
+                </div>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                    {approved ? "KYC Verified" : "KYC Under Review"}
+                </h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-2 leading-relaxed max-w-sm mx-auto">
+                    {approved
+                        ? "Your KYC has been verified. You don't need to submit it again."
+                        : "Your KYC is currently under review. We'll notify you once a decision is made."}
                 </p>
             </div>
         );
@@ -162,20 +237,19 @@ export default function KycForm() {
 
     return (
         <div className="max-w-2xl mx-auto bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-3xl shadow-xl shadow-slate-100/40 dark:shadow-none overflow-hidden my-24">
-            {/* Kyc Already submitted */}
-            {
-                kycResponse && (
-                    <div className="max-w-xl mx-auto bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-8 text-center shadow-xl shadow-slate-100/50 dark:shadow-none my-24">
-                        <div className="w-16 h-5 bg-emerald-50 dark:bg-emerald-950/40 rounded-full flex items-center justify-center mx-auto text-emerald-600 dark:text-emerald-400 mb-6">
-                            <Check className="w-8 h-8 stroke-[2.5]" />
-                        </div>
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">KYC Submitted</h2>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-2 leading-relaxed max-w-sm mx-auto">
-                            Your verification is now pending review. You&apos;ll be notified once an administrator approves it.
+            {/* REJECTED: banner above the resubmission form */}
+            {isRejected && (
+                <div className="bg-red-50/70 dark:bg-red-950/30 border-b border-red-100 dark:border-red-900/50 px-6 py-5 sm:px-8 flex items-start gap-3">
+                    <XCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                    <div>
+                        <p className="text-sm font-bold text-red-700 dark:text-red-300">KYC Rejected — Resubmission</p>
+                        <p className="text-xs text-red-600/80 dark:text-red-400/80 mt-1 leading-relaxed">
+                            Your previous submission was rejected. Your details are prefilled below — update the
+                            information and re-upload your documents, then submit again for review.
                         </p>
                     </div>
-                )
-            }
+                </div>
+            )}
 
             {/* PROGRESS TRACKER */}
             <div className="bg-slate-50/70 dark:bg-slate-950/40 border-b border-slate-100 dark:border-slate-800 px-6 py-5 sm:px-8">
@@ -278,8 +352,8 @@ export default function KycForm() {
                             </select>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                            <FileDrop label="Front of document" required file={files.frontImage} inputRef={inputRefs.frontImage} onPick={(f) => pickFile("frontImage", f)} />
-                            <FileDrop label="Back of document" file={files.backImage} inputRef={inputRefs.backImage} onPick={(f) => pickFile("backImage", f)} />
+                            <FileDrop label="Front of document" required file={files.frontImage} onPick={(f) => pickFile("frontImage", f)} />
+                            <FileDrop label="Back of document" file={files.backImage} onPick={(f) => pickFile("backImage", f)} />
                         </div>
                     </div>
                 )}
@@ -291,7 +365,7 @@ export default function KycForm() {
                             <h3 className="text-base font-bold text-slate-900 dark:text-white">Selfie Verification</h3>
                             <p className="text-xs text-slate-400 font-medium">Upload a clear portrait so we can match it to your document.</p>
                         </div>
-                        <FileDrop label="Your selfie" required large file={files.selfieImage} inputRef={inputRefs.selfieImage} onPick={(f) => pickFile("selfieImage", f)} />
+                        <FileDrop label="Your selfie" required large file={files.selfieImage} onPick={(f) => pickFile("selfieImage", f)} />
                         <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800 rounded-xl p-3.5 text-[11px] font-medium space-y-1.5 text-slate-600 dark:text-slate-300">
                             <span className="text-slate-400 uppercase font-bold text-[9px] tracking-wider block mb-1">Review</span>
                             <div>Name: <strong className="text-slate-800 dark:text-slate-200">{[form.firstName, form.middleName, form.lastName].filter(Boolean).join(" ") || "—"}</strong></div>
@@ -322,7 +396,7 @@ export default function KycForm() {
                         className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 disabled:cursor-not-allowed text-white text-xs font-bold px-5 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md shadow-indigo-100 dark:shadow-none transition-all"
                     >
                         {submitKyc.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                        {currentStep === 4 ? "Submit KYC" : "Continue"}
+                        {currentStep === 4 ? (isRejected ? "Resubmit KYC" : "Submit KYC") : "Continue"}
                         {currentStep < 4 && <ArrowRight className="w-3.5 h-3.5" />}
                     </button>
                 </div>
@@ -352,17 +426,16 @@ function FileDrop({
     label,
     file,
     onPick,
-    inputRef,
     required,
     large,
 }: {
     label: string;
     file: File | null;
     onPick: (f: File | null) => void;
-    inputRef: React.RefObject<HTMLInputElement | null>;
     required?: boolean;
     large?: boolean;
 }) {
+    const inputRef = useRef<HTMLInputElement>(null);
     const previewUrl = file ? URL.createObjectURL(file) : null;
     useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
 

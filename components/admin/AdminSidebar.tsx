@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Building2, FileCheck2, LayoutDashboard, LogOut, Menu, ShieldCheck, Users, X } from "lucide-react";
+import { Building2, FileCheck2, LayoutDashboard, LogOut, Menu, Settings, ShieldCheck, UserRound, Users, X } from "lucide-react";
 import { useState } from "react";
 import { useLogout } from "@/app/hooks/useAuth";
 
@@ -15,16 +15,26 @@ const navigation = [
     { href: "/admin/kyc", label: "KYC review", icon: FileCheck2 },
 ];
 
+// Account pages available to the super admin as well.
+const accountNavigation = [
+    { href: "/profile", label: "My Profile", icon: UserRound },
+    { href: "/settings", label: "Settings", icon: Settings },
+];
+
 export default function AdminSidebar() {
     const [open, setOpen] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
     const logout = useLogout();
     const signOut = async () => { try { await logout.mutateAsync(); } finally { router.replace("/login"); } };
-    const links = <nav className="space-y-1">{navigation.map(({ href, label, icon: Icon, exact }) => {
+    const renderLink = ({ href, label, icon: Icon, exact }: (typeof navigation)[number]) => {
         const active = exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
         return <Link onClick={() => setOpen(false)} key={href} href={href} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${active ? "bg-indigo-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}><Icon className="h-4 w-4" />{label}</Link>;
-    })}</nav>;
+    };
+    const links = <nav className="space-y-1">{navigation.map(renderLink)}
+        <div className="my-3 border-t border-slate-200 dark:border-slate-800" />
+        {accountNavigation.map(renderLink)}
+    </nav>;
     return <>
         <button aria-label="Open admin navigation" onClick={() => setOpen(true)} className="fixed left-4 top-4 z-40 rounded-lg bg-indigo-600 p-2 text-white lg:hidden"><Menu className="h-5 w-5" /></button>
         {open && <button aria-label="Close navigation" onClick={() => setOpen(false)} className="fixed inset-0 z-40 bg-slate-950/40 lg:hidden" />}
