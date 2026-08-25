@@ -6,6 +6,7 @@ export const notificationService = {
     registerToken: (token: string) => apiClient.post("notifications/token", { token }),
     removeToken: () => apiClient.delete("notifications/token"),
     getAll: () => apiClient.get<{ data: AppNotification[] }>("notifications"),
+    getUnreadCount: () => apiClient.get<{ data: number }>("notifications/unread-count"),
     markRead: (id: string) => apiClient.patch(`notifications/${id}/read`, {}),
     markAllRead: () => apiClient.patch("notifications/read-all", {}),
 };

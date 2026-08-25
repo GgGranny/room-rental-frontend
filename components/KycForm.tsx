@@ -50,6 +50,7 @@ const E164 = /^\+[1-9]\d{7,14}$/;
 export default function KycForm() {
     const [currentStep, setCurrentStep] = useState(1);
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [isReapplying, setIsReapplying] = useState(false);
     const submitKyc = useSubmitKyc();
     const { data: userData } = useCurrentUser();
     const { data: kycResponse } = useMyKyc();
@@ -215,34 +216,67 @@ export default function KycForm() {
         );
     }
 
-    // PENDING / APPROVED: no new submission possible — show status instead of the form.
-    if (kycStatus === "PENDING" || kycStatus === "APPROVED") {
+    // PENDING / APPROVED / REJECTED (until Reapply is clicked): show status instead of the form.
+    if (kycStatus === "PENDING" || kycStatus === "APPROVED" || (kycStatus === "REJECTED" && !isReapplying)) {
         const approved = kycStatus === "APPROVED";
+        const pending = kycStatus === "PENDING";
+        const rejected = kycStatus === "REJECTED";
+
         return (
             <div className="max-w-xl mx-auto bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-8 text-center shadow-xl shadow-slate-100/50 dark:shadow-none my-24">
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 ${approved ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400" : "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400"}`}>
-                    {approved ? <CheckCircle2 className="w-8 h-8" /> : <Clock3 className="w-8 h-8" />}
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 ${approved ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400" : pending ? "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400" : "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400"}`}>
+                    {approved && <CheckCircle2 className="w-8 h-8" />}
+                    {pending && <Clock3 className="w-8 h-8" />}
+                    {rejected && <XCircle className="w-8 h-8" />}
                 </div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-                    {approved ? "KYC Verified" : "KYC Under Review"}
+                <div className="mb-2">
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full ${approved ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300" : pending ? "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300" : "bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300"}`}>
+                        Status: {approved ? "Approved ✓" : pending ? "Pending" : "Rejected"}
+                    </span>
+                </div>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-2">
+                    {approved ? "KYC Verified" : pending ? "KYC Verification" : "KYC Verification Rejected"}
                 </h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-2 leading-relaxed max-w-sm mx-auto">
-                    {approved
-                        ? "Your KYC has been verified. You don't need to submit it again."
-                        : "Your KYC is currently under review. We'll notify you once a decision is made."}
+                    {approved && "Your KYC has been successfully verified."}
+                    {pending && "Your KYC is currently under review. Please wait while an administrator reviews your documents."}
+                    {rejected && "Your KYC verification was rejected. Please review the details and reapply."}
                 </p>
+                {rejected && (
+                    <div className="mt-6">
+                        <button
+                            type="button"
+                            onClick={() => setIsReapplying(true)}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition-all shadow-md shadow-indigo-100 dark:shadow-none"
+                        >
+                            Resubmit KYC
+                        </button>
+                    </div>
+                )}
             </div>
         );
     }
 
     return (
         <div className="max-w-2xl mx-auto bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-3xl shadow-xl shadow-slate-100/40 dark:shadow-none overflow-hidden my-24">
-            {/* REJECTED: banner above the resubmission form */}
-            {isRejected && (
+            {/* NOT SUBMITTED status header banner */}
+            {!kycStatus && (
+                <div className="bg-slate-50/70 dark:bg-slate-950/40 border-b border-slate-100 dark:border-slate-800 px-6 py-4 sm:px-8 flex items-center justify-between">
+                    <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                            Status: Not Submitted
+                        </span>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">You have not submitted your KYC yet.</p>
+                    </div>
+                </div>
+            )}
+
+            {/* REJECTED: banner above the resubmission form when Reapply is active */}
+            {isRejected && isReapplying && (
                 <div className="bg-red-50/70 dark:bg-red-950/30 border-b border-red-100 dark:border-red-900/50 px-6 py-5 sm:px-8 flex items-start gap-3">
                     <XCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
                     <div>
-                        <p className="text-sm font-bold text-red-700 dark:text-red-300">KYC Rejected — Resubmission</p>
+                        <p className="text-sm font-bold text-red-700 dark:text-red-300">KYC Verification Rejected — Resubmission</p>
                         <p className="text-xs text-red-600/80 dark:text-red-400/80 mt-1 leading-relaxed">
                             Your previous submission was rejected. Your details are prefilled below — update the
                             information and re-upload your documents, then submit again for review.
