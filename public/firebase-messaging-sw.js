@@ -53,6 +53,7 @@ self.addEventListener("notificationclick", (event) => {
     else if (action === "OPEN_PROPERTY") url = "/landlord/properties";
     else if (action === "OPEN_KYC") url = "/kyc";
     else if (action === "OPEN_PAYMENT") url = "/landlord/featured";
+    else if (action === "OPEN_ROOMMATE") url = "/roommates";
 
     event.waitUntil(
         clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {

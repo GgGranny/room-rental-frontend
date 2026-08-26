@@ -45,8 +45,10 @@ export default function ScheduleViewingModal({
         }
     };
 
+    // z-[1100] keeps the dialog above Leaflet map controls (z-index 1000) on
+    // pages like /nearby and /room/[id] that render a map behind it.
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} />
             <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/80 dark:border-slate-800 p-6 space-y-5">
                 <div className="flex items-start justify-between">

@@ -44,6 +44,8 @@ function navigateByAction(action?: string) {
             return "/kyc";
         case "OPEN_PAYMENT":
             return "/landlord/featured";
+        case "OPEN_ROOMMATE":
+            return "/roommates";
         default:
             return "/home";
     }
@@ -52,12 +54,14 @@ function navigateByAction(action?: string) {
 async function ensureServiceWorker() {
     if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
     try {
-        const reg = await navigator.serviceWorker.getRegistration(SW_PATH);
-        if (!reg) {
-            await navigator.serviceWorker.register(SW_PATH);
-        }
+        // Idempotent: registering an already-registered script is a no-op.
+        // getToken() requires an ACTIVE worker at the default scope, so we
+        // register first and wait for readiness before requesting a token.
+        await navigator.serviceWorker.register(SW_PATH);
+        await navigator.serviceWorker.ready;
     } catch (e) {
         console.warn("Service worker registration failed:", e);
+        throw e;
     }
 }
 
@@ -76,11 +80,13 @@ export function usePushNotification() {
         const messaging = await getFirebaseMessaging();
         if (!messaging) return false;
         if (typeof Notification === "undefined" || Notification.permission !== "granted") return false;
+        // The worker must be registered and active BEFORE requesting a token.
+        await ensureServiceWorker();
         const currentToken = await getToken(messaging, {
             vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+            serviceWorkerRegistration: await navigator.serviceWorker.getRegistration(),
         });
         if (!currentToken) return false;
-        await ensureServiceWorker();
         await notificationService.registerToken(currentToken);
         setRegistered(true);
         return true;

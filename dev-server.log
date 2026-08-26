@@ -1,0 +1,252 @@
+npm notice run room-rental-app@0.1.0 dev
+npm notice run next dev
+▲ Next.js 16.2.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://172.28.32.1:3000
+- Environments: .env
+✓ Ready in 3.3s
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+
+○ Compiling /settings/profile ...
+ GET /settings/profile 200 in 23.7s (next.js: 19.3s, proxy.ts: 555ms, application-code: 3.8s)
+ GET /settings/profile 200 in 23.6s (next.js: 20.1s, proxy.ts: 514ms, application-code: 3.0s)
+ GET /settings 307 in 2.8s (next.js: 2.4s, proxy.ts: 28ms, application-code: 334ms)
+ GET /settings/profile 200 in 529ms (next.js: 54ms, proxy.ts: 25ms, application-code: 451ms)
+ GET /settings/kyc 200 in 2.4s (next.js: 2.0s, proxy.ts: 20ms, application-code: 372ms)
+ GET /settings/notifications 200 in 2.1s (next.js: 1744ms, proxy.ts: 21ms, application-code: 337ms)
+ GET /settings/preferences 200 in 2.4s (next.js: 1918ms, proxy.ts: 11ms, application-code: 501ms)
+ GET /settings/preferences 200 in 296ms (next.js: 73ms, proxy.ts: 69ms, application-code: 154ms)
+ GET /settings/profile 200 in 111ms (next.js: 26ms, proxy.ts: 7ms, application-code: 78ms)
+ GET /settings/kyc 200 in 117ms (next.js: 23ms, proxy.ts: 5ms, application-code: 89ms)
+ GET /settings/notifications 200 in 87ms (next.js: 15ms, proxy.ts: 5ms, application-code: 68ms)
+ GET /settings/kyc 200 in 79ms (next.js: 13ms, proxy.ts: 6ms, application-code: 60ms)
+ GET /settings/preferences 200 in 77ms (next.js: 19ms, proxy.ts: 12ms, application-code: 46ms)
+○ Compiling /home ...
+ GET /home 200 in 5.7s (next.js: 4.9s, proxy.ts: 9ms, application-code: 757ms)
+○ Compiling /room/[id] ...
+✓ Finished filesystem cache database compaction in 10.1s
+ GET /room/957ea59f-a02a-4d8b-9766-fe00780084aa 200 in 21.0s (next.js: 20.7s, proxy.ts: 21ms, application-code: 302ms)
+ GET /roommates?roomId=957ea59f-a02a-4d8b-9766-fe00780084aa 200 in 1754ms (next.js: 1668ms, proxy.ts: 11ms, application-code: 74ms)
+✓ Compiled in 5.5s
+ GET /settings/profile 200 in 4.1s (next.js: 1190ms, proxy.ts: 233ms, application-code: 2.6s)
+ GET /roommates?roomId=957ea59f-a02a-4d8b-9766-fe00780084aa 200 in 5.4s (next.js: 3.3s, proxy.ts: 1256ms, application-code: 804ms)
+ GET /roommates?roomId=957ea59f-a02a-4d8b-9766-fe00780084aa 200 in 2.1s (next.js: 209ms, proxy.ts: 311ms, application-code: 1577ms)
+ GET /roommates?roomId=957ea59f-a02a-4d8b-9766-fe00780084aa 200 in 243ms (next.js: 17ms, proxy.ts: 16ms, application-code: 210ms)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>
+      <AppDevOverlayErrorBoundary globalError={[...]}>
+        <ReplaySsrOnlyErrors>
+        <DevRootHTTPAccessFallbackBoundary>
+          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>
+            <HTTPAccessFallbackErrorBoundary pathname="/settings/..." notFound={<NotAllowedRootHTTPFallbackError>} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <Head>
+                  <__next_root_layout_boundary__>
+                    <SegmentViewNode type="layout" pagePath="layout.tsx">
+                      <SegmentTrieNode>
+                      <link>
+                      <script>
+                      <script>
+                      <script>
+                      <RootLayout>
+                        <html lang="en" className="inter_3d9c..." suppressHydrationWarning={true}>
+                          <body
+                            className="min-h-full flex flex-col"
+-                           data-new-gr-c-s-check-loaded="14.1323.0"
+-                           data-gr-ext-installed=""
+                          >
+                  ...
+ 
+ GET /settings/profile 200 in 1121ms (next.js: 57ms, proxy.ts: 19ms, application-code: 1046ms)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>
+      <AppDevOverlayErrorBoundary globalError={[...]}>
+        <ReplaySsrOnlyErrors>
+        <DevRootHTTPAccessFallbackBoundary>
+          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>
+            <HTTPAccessFallbackErrorBoundary pathname="/settings/..." notFound={<NotAllowedRootHTTPFallbackError>} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <Head>
+                  <__next_root_layout_boundary__>
+                    <SegmentViewNode type="layout" pagePath="layout.tsx">
+                      <SegmentTrieNode>
+                      <link>
+                      <script>
+                      <script>
+                      <script>
+                      <RootLayout>
+                        <html lang="en" className="inter_3d9c..." suppressHydrationWarning={true}>
+                          <body
+                            className="min-h-full flex flex-col"
+-                           data-new-gr-c-s-check-loaded="14.1323.0"
+-                           data-gr-ext-installed=""
+                          >
+                  ...
+ 
+○ Compiling /profile ...
+ GET /settings 200 in 1074ms (next.js: 915ms, proxy.ts: 24ms, application-code: 135ms)
+ GET /settings/profile 200 in 698ms (next.js: 44ms, proxy.ts: 29ms, application-code: 625ms)
+ GET /settings/profile 200 in 511ms (next.js: 62ms, proxy.ts: 19ms, application-code: 430ms)
+ GET /home 200 in 3.6s (next.js: 1496ms, proxy.ts: 58ms, application-code: 2.0s)
+ GET /room/957ea59f-a02a-4d8b-9766-fe00780084aa 200 in 355ms (next.js: 190ms, proxy.ts: 15ms, application-code: 150ms)
+ GET /roommates?roomId=957ea59f-a02a-4d8b-9766-fe00780084aa 200 in 3.1s (next.js: 1663ms, proxy.ts: 35ms, application-code: 1364ms)
+✓ Finished writing to filesystem cache in 11.1s
+✓ Finished filesystem cache database compaction in 12.5s
+ GET /unauthorized 200 in 2.1s (next.js: 1856ms, proxy.ts: 4ms, application-code: 209ms)
+ GET /login 200 in 3.3s (next.js: 3.0s, proxy.ts: 18ms, application-code: 288ms)
+[browser] Login failed: Error: Error fetching auth/login: undefined
+    at request (app/lib/GlobalApi.tsx:47:15)
+  45 |     if (!rs.ok) {
+  46 |         const error: { message?: string } = await rs.json().catch(() => ({ message: rs.sta...
+> 47 |         throw new Error(`Error fetching ${endpoint}: ${error.message}`);
+     |               ^
+  48 |     }
+  49 |     return await rs.json();
+  50 | } (app/hooks/useAuth.tsx:21:21)
+[browser] Login failed: Error: Error fetching auth/login: undefined
+    at request (app/lib/GlobalApi.tsx:47:15)
+  45 |     if (!rs.ok) {
+  46 |         const error: { message?: string } = await rs.json().catch(() => ({ message: rs.sta...
+> 47 |         throw new Error(`Error fetching ${endpoint}: ${error.message}`);
+     |               ^
+  48 |     }
+  49 |     return await rs.json();
+  50 | } (app/(auth)
+ GET /landlord 200 in 1696ms (next.js: 1595ms, proxy.ts: 13ms, application-code: 88ms)
+○ Compiling /landlord/featured ...
+ GET /landlord/featured 200 in 4.8s (next.js: 4.7s, proxy.ts: 5ms, application-code: 91ms)
+ GET /landlord/schedules 200 in 1819ms (next.js: 1731ms, proxy.ts: 8ms, application-code: 80ms)
+○ Compiling /landlord/properties/all ...
+ GET /landlord/properties/all 200 in 3.9s (next.js: 3.4s, proxy.ts: 33ms, application-code: 389ms)
+✓ Finished filesystem cache database compaction in 12.1s
+○ Compiling /landlord/properties/add ...
+ GET /landlord/properties/add 200 in 4.3s (next.js: 3.9s, proxy.ts: 15ms, application-code: 365ms)
+✓ Compiled in 4.9s
+✓ Compiled in 3.2s
+✓ Finished filesystem cache database compaction in 19.1s
+ GET /landlord/properties/add 200 in 3.9s (next.js: 1129ms, proxy.ts: 2.1s, application-code: 707ms)
+ GET /landlord/properties/add 200 in 259ms (next.js: 31ms, proxy.ts: 21ms, application-code: 208ms)
+ GET /landlord/properties/add 200 in 373ms (next.js: 46ms, proxy.ts: 14ms, application-code: 313ms)
+ GET /landlord/properties/add 200 in 284ms (next.js: 43ms, proxy.ts: 16ms, application-code: 225ms)
+ GET /roommates?roomId=957ea59f-a02a-4d8b-9766-fe00780084aa 200 in 2.4s (next.js: 1317ms, proxy.ts: 14ms, application-code: 1040ms)
+ GET /roommates?roomId=957ea59f-a02a-4d8b-9766-fe00780084aa 200 in 540ms (next.js: 119ms, proxy.ts: 17ms, application-code: 404ms)
+✓ Finished filesystem cache database compaction in 22.0s
+ GET /roommates?roomId=957ea59f-a02a-4d8b-9766-fe00780084aa 200 in 653ms (next.js: 79ms, proxy.ts: 27ms, application-code: 548ms)
+ GET /roommates?roomId=957ea59f-a02a-4d8b-9766-fe00780084aa 200 in 303ms (next.js: 45ms, proxy.ts: 18ms, application-code: 240ms)
+ GET /roommates?roomId=957ea59f-a02a-4d8b-9766-fe00780084aa 200 in 2.3s (next.js: 45ms, proxy.ts: 14ms, application-code: 2.2s)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>
+      <AppDevOverlayErrorBoundary globalError={[...]}>
+        <ReplaySsrOnlyErrors>
+        <DevRootHTTPAccessFallbackBoundary>
+          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>
+            <HTTPAccessFallbackErrorBoundary pathname="/roommates" notFound={<NotAllowedRootHTTPFallbackError>} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <Head>
+                  <__next_root_layout_boundary__>
+                    <SegmentViewNode type="layout" pagePath="layout.tsx">
+                      <SegmentTrieNode>
+                      <link>
+                      <script>
+                      <script>
+                      <script>
+                      <RootLayout>
+                        <html lang="en" className="inter_3d9c..." suppressHydrationWarning={true}>
+                          <body
+                            className="min-h-full flex flex-col"
+-                           data-new-gr-c-s-check-loaded="14.1323.0"
+-                           data-gr-ext-installed=""
+                          >
+                  ...
+ 
+ GET /roommates?roomId=957ea59f-a02a-4d8b-9766-fe00780084aa 200 in 1329ms (next.js: 228ms, proxy.ts: 269ms, application-code: 832ms)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>
+      <AppDevOverlayErrorBoundary globalError={[...]}>
+        <ReplaySsrOnlyErrors>
+        <DevRootHTTPAccessFallbackBoundary>
+          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>
+            <HTTPAccessFallbackErrorBoundary pathname="/roommates" notFound={<NotAllowedRootHTTPFallbackError>} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <Head>
+                  <__next_root_layout_boundary__>
+                    <SegmentViewNode type="layout" pagePath="layout.tsx">
+                      <SegmentTrieNode>
+                      <link>
+                      <script>
+                      <script>
+                      <script>
+                      <RootLayout>
+                        <html lang="en" className="inter_3d9c..." suppressHydrationWarning={true}>
+                          <body
+                            className="min-h-full flex flex-col"
+-                           data-new-gr-c-s-check-loaded="14.1323.0"
+-                           data-gr-ext-installed=""
+                          >
+                  ...
+ 
+ GET /landlord/properties/add 200 in 1140ms (next.js: 74ms, proxy.ts: 12ms, application-code: 1054ms)
+ GET /landlord/properties/all 200 in 423ms (next.js: 235ms, proxy.ts: 17ms, application-code: 171ms)
+ GET /landlord/properties/add 200 in 1118ms (next.js: 220ms, proxy.ts: 18ms, application-code: 881ms)
+ GET /landlord/schedules 200 in 264ms (next.js: 178ms, proxy.ts: 8ms, application-code: 78ms)
+ GET /landlord/featured 200 in 286ms (next.js: 181ms, proxy.ts: 10ms, application-code: 95ms)
+ GET /profile 200 in 286ms (next.js: 172ms, proxy.ts: 10ms, application-code: 104ms)
+ GET /settings 200 in 306ms (next.js: 183ms, proxy.ts: 12ms, application-code: 110ms)
+ GET /settings/profile 200 in 396ms (next.js: 128ms, proxy.ts: 18ms, application-code: 249ms)
+ GET /settings/profile 200 in 156ms (next.js: 36ms, proxy.ts: 14ms, application-code: 106ms)
+ GET /unauthorized 200 in 220ms (next.js: 130ms, proxy.ts: 8ms, application-code: 82ms)
+ GET /home 200 in 287ms (next.js: 147ms, proxy.ts: 13ms, application-code: 127ms)
+ GET /room/957ea59f-a02a-4d8b-9766-fe00780084aa 200 in 846ms (next.js: 507ms, proxy.ts: 33ms, application-code: 307ms)
+ GET /roommates?roomId=957ea59f-a02a-4d8b-9766-fe00780084aa 200 in 149ms (next.js: 41ms, proxy.ts: 29ms, application-code: 78ms)
