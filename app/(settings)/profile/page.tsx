@@ -50,6 +50,9 @@ export default function ProfilePage() {
     }
 
     const fullName = [user.fname, user.lname].filter(Boolean).join(" ") || "Your account";
+    // Verified badge reflects identity verification: APPROVED KYC only
+    // (admin accounts are exempt from KYC).
+    const isKycVerified = user.role === "ROLE_ADMIN" || (user.kycSubmitted && user.kycStatus === "APPROVED");
 
     return (
         <>
@@ -66,7 +69,7 @@ export default function ProfilePage() {
                                         {roleLabel[user.role] ?? user.role}
                                     </span>
                                 )}
-                                {user.verified ? (
+                                {isKycVerified ? (
                                     <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 uppercase tracking-wider flex items-center gap-1">
                                         <BadgeCheck className="w-3.5 h-3.5" /> Verified
                                     </span>

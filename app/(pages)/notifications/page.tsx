@@ -24,6 +24,10 @@ function routeFor(item: AppNotification): string {
         case "PAYMENT_SUCCESS":
         case "PAYMENT_FAILED":
             return "/landlord/featured";
+        case "ROOMMATE_REQUEST":
+        case "ROOMMATE_REQUEST_ACCEPTED":
+        case "ROOMMATE_REQUEST_REJECTED":
+            return "/roommates";
         default:
             return "/home";
     }

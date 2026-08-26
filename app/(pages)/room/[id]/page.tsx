@@ -18,6 +18,7 @@ import {
     Phone,
     Mail,
     Clock3,
+    Users,
     XCircle,
     AlertCircle,
     ArrowRight,
@@ -87,12 +88,16 @@ export default function RoomDetailsPage() {
     const images = room.imageUrls ?? [];
     const hostName = [host?.fname, host?.lname].filter(Boolean).join(" ") || "Property Host";
     const canSchedule = room.status === "AVAILABLE";
+    const isSharedRoom = room.sharingType === "SHARED";
 
     const isAdmin = user?.role === "ROLE_ADMIN";
     const kycStatus = user?.kycStatus;
     const kycSubmitted = user?.kycSubmitted;
     const isKycApproved = isAdmin || (kycSubmitted && kycStatus === "APPROVED");
     const kycHref = user?.role === "ROLE_LANDLORD" ? "/landlord/kyc" : "/kyc";
+    // Tenant-only feature: landlords/admins manage shared rooms but never use
+    // the roommate finder themselves.
+    const showRoommateSection = isSharedRoom && user?.role !== "ROLE_LANDLORD" && !isAdmin;
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50 transition-colors duration-300">
@@ -134,9 +139,14 @@ export default function RoomDetailsPage() {
                         <div className="space-y-2">
                             <div className="flex flex-wrap items-center gap-3">
                                 <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">{room.roomTitle}</h1>
+                                {room.sharingType && (
+                                    <div className={`flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-bold ${room.sharingType === "SHARED" ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400" : "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400"}`}>
+                                        <Home className="w-3.5 h-3.5" /> {room.sharingType === "SHARED" ? "Shared Room" : "Private Room"}
+                                    </div>
+                                )}
                                 {room.roomType && (
-                                    <div className="flex items-center gap-1 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 px-2.5 py-0.5 rounded-lg text-xs font-bold capitalize">
-                                        <Home className="w-3.5 h-3.5" /> {room.roomType}
+                                    <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2.5 py-0.5 rounded-lg text-xs font-bold capitalize">
+                                        {room.roomType}
                                     </div>
                                 )}
                             </div>
@@ -172,6 +182,26 @@ export default function RoomDetailsPage() {
                                 </div>
                             ))}
                         </div>
+
+                        {/* SHARED ROOM — ROOMMATE FINDER (never shown for private rooms) */}
+                        {showRoommateSection && (
+                            <div className="bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200/70 dark:border-emerald-900/50 rounded-2xl p-5 sm:p-6 space-y-3 shadow-sm">
+                                <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold text-sm">
+                                    <Users className="w-4 h-4" />
+                                    <span>Looking for a roommate?</span>
+                                </div>
+                                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium max-w-xl">
+                                    This is a shared room. Express your interest, browse tenants looking to share this room and send a roommate request.
+                                    Approved KYC is required to send requests.
+                                </p>
+                                <Link
+                                    href={`/roommates?roomId=${room.roomId}`}
+                                    className="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 px-5 rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-600/10"
+                                >
+                                    Find a Roommate <ArrowRight className="w-3.5 h-3.5" />
+                                </Link>
+                            </div>
+                        )}
 
                         {/* FACILITIES & RULES */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

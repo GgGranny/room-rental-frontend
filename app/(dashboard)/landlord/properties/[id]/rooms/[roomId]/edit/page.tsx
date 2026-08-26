@@ -8,15 +8,20 @@ import { ArrowLeft, Loader2, MapPin, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { useGetRoomById, useRemoveRoomImage, useUpdateRoom } from "@/app/hooks/useRoom";
 import type { RoomDetails, RoomImageResponse } from "@/app/services/roomService";
+import { ROOM_TYPE_OPTIONS } from "@/app/lib/roomTypes";
 
 const Map = dynamic(() => import("@/components/Map"), { ssr: false });
 type RoomForm = {
     roomTitle: string; description: string; location: string; address: string; price: string | number; status: string;
-    preferredTenants: string[]; rules: string; facilities: string; roomType: string; floorNumber: string | number | null;
+    preferredTenants: string[]; rules: string; facilities: string; roomType: string; sharingType: "PRIVATE" | "SHARED"; floorNumber: string | number | null;
     totalRooms: string | number | null;
 };
-const emptyForm: RoomForm = { roomTitle: "", description: "", location: "", address: "", price: "", status: "AVAILABLE", preferredTenants: [], rules: "", facilities: "", roomType: "", floorNumber: null, totalRooms: null };
-const fields: Array<[keyof Pick<RoomForm, "roomTitle" | "price" | "roomType" | "floorNumber" | "totalRooms">, string]> = [["roomTitle", "Room title"], ["price", "Monthly price"], ["roomType", "Room type"], ["floorNumber", "Floor number"], ["totalRooms", "Total rooms"]];
+const emptyForm: RoomForm = { roomTitle: "", description: "", location: "", address: "", price: "", status: "AVAILABLE", preferredTenants: [], rules: "", facilities: "", roomType: "", sharingType: "PRIVATE", floorNumber: null, totalRooms: null };
+const fields: Array<[keyof Pick<RoomForm, "roomTitle" | "price" | "floorNumber" | "totalRooms">, string]> = [["roomTitle", "Room title"], ["price", "Monthly price"], ["floorNumber", "Floor number"], ["totalRooms", "Total rooms"]];
+const sharingTypeOptions = [
+    { value: "PRIVATE" as const, label: "Private", hint: "Normal rental flow" },
+    { value: "SHARED" as const, label: "Shared", hint: "Enables the roommate finder" },
+];
 
 export default function EditRoomPage() {
     const { id, roomId } = useParams<{ id: string; roomId: string }>();
@@ -34,7 +39,7 @@ export default function EditRoomPage() {
         if (!room) return;
         // The form mirrors server data only when the room query changes.
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        setForm({ roomTitle: room.roomTitle, description: room.description ?? "", location: room.location ?? room.address ?? "", address: room.address ?? room.location ?? "", price: room.price, status: room.status, preferredTenants: room.preferredTenants ?? [], rules: (room.rules ?? []).join(", "), facilities: (room.facilities ?? []).join(", "), roomType: room.roomType ?? "", floorNumber: room.floorNumber ?? null, totalRooms: room.totalRooms ?? null });
+        setForm({ roomTitle: room.roomTitle, description: room.description ?? "", location: room.location ?? room.address ?? "", address: room.address ?? room.location ?? "", price: room.price, status: room.status, preferredTenants: room.preferredTenants ?? [], rules: (room.rules ?? []).join(", "), facilities: (room.facilities ?? []).join(", "), roomType: room.roomType ?? "", sharingType: room.sharingType === "SHARED" ? "SHARED" : "PRIVATE", floorNumber: room.floorNumber ?? null, totalRooms: room.totalRooms ?? null });
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setExistingImages(room.imageUrls ?? []);
         if (Number.isFinite(room.latitude) && Number.isFinite(room.Longitude)) {
@@ -81,6 +86,17 @@ export default function EditRoomPage() {
         <form onSubmit={submit} className="grid gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:grid-cols-2">
             {fields.map(([key, label]) => <label key={key} className="text-sm font-semibold">{label}<input required={["roomTitle", "price"].includes(key)} type={["price", "floorNumber", "totalRooms"].includes(key) ? "number" : "text"} value={form[key] ?? ""} onChange={event => setForm(current => ({ ...current, [key]: event.target.value }))} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal dark:border-slate-700 dark:bg-slate-950" /></label>)}
             <label className="text-sm font-semibold">Status<select value={form.status} onChange={event => setForm(current => ({ ...current, status: event.target.value }))} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal dark:border-slate-700 dark:bg-slate-950">{["AVAILABLE", "BOOKED", "MAINTENANCE", "UNAVAILABLE"].map(status => <option key={status}>{status}</option>)}</select></label>
+            <label className="text-sm font-semibold">Room category<select value={form.roomType} onChange={event => setForm(current => ({ ...current, roomType: event.target.value }))} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal dark:border-slate-700 dark:bg-slate-950">{form.roomType && !ROOM_TYPE_OPTIONS.some(option => option.value === form.roomType) && <option value={form.roomType}>{form.roomType} (legacy)</option>}{ROOM_TYPE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+            <div className="sm:col-span-2">
+                <span className="block text-sm font-semibold">Room type</span>
+                <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                    {sharingTypeOptions.map(option => {
+                        const selected = form.sharingType === option.value;
+                        return <button key={option.value} type="button" onClick={() => setForm(current => ({ ...current, sharingType: option.value }))} className={`rounded-xl border px-4 py-3 text-left transition ${selected ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200 dark:border-indigo-400 dark:bg-indigo-950/50 dark:ring-indigo-900" : "border-slate-200 bg-white hover:border-indigo-300 dark:border-slate-700 dark:bg-slate-950"}`}><span className="block text-sm font-bold">{option.label}</span><span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">{option.hint}</span></button>;
+                    })}
+                </div>
+                <p className="mt-1 text-xs text-slate-500">Shared rooms let interested tenants find roommates for this room.</p>
+            </div>
             <div className="space-y-2 sm:col-span-2"><label className="block text-sm font-semibold">Room location</label><div className="relative"><MapPin className="pointer-events-none absolute left-3 top-3 z-10 h-4 w-4 text-slate-400" /><input value={form.address || "Search, click, or drag the map marker"} readOnly className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-950" /></div><div className="h-80 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"><Map lat={position.lat} lng={position.lng} searchable onLocationChange={({ lat, lng, address }) => { setPosition({ lat, lng }); setForm(current => ({ ...current, location: address, address })); }} /></div><p className="text-xs text-slate-500">Search, click, or drag the pin to update the address and coordinates automatically.</p></div>
             <label className="text-sm font-semibold sm:col-span-2">Description<textarea rows={4} value={form.description} onChange={event => setForm(current => ({ ...current, description: event.target.value }))} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal dark:border-slate-700 dark:bg-slate-950" /></label>
             <label className="text-sm font-semibold sm:col-span-2">Facilities (comma-separated)<input value={form.facilities} onChange={event => setForm(current => ({ ...current, facilities: event.target.value }))} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal dark:border-slate-700 dark:bg-slate-950" /></label>

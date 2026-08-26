@@ -3,19 +3,24 @@
 import { useCheckProfileCompletion, useCurrentUser } from "@/app/hooks/useAuth";
 import { useRecommendedRooms, useSearchRooms } from "@/app/hooks/useRoom";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
-import { Search, SlidersHorizontal, Building2 } from "lucide-react";
+import { Search, SlidersHorizontal, Building2, Navigation } from "lucide-react";
 import { filterIcons } from "@/app/utils/FilterIcons";
+import { FILTERABLE_ROOM_TYPES } from "@/app/lib/roomTypes";
 import Card from "@/components/myui/Card";
 import Hero from "@/components/Hero";
 import { RoomListItem, RoomSearchParams } from "@/app/services/roomService";
 
-// Category chips map to price/type hints against the real search API.
+// Category chips map to the real search API. Room-type values come from the shared
+// roomTypes source of truth (exact enum names, matched case-sensitively by the
+// backend); budget/luxury are price ranges.
 const categoryFilters: Record<string, RoomSearchParams> = {
-    luxury: { minPrice: 30000 },
-    single: { roomType: "single" },
+    ...Object.fromEntries(
+        FILTERABLE_ROOM_TYPES.map((option) => [option.value.toLowerCase(), { roomType: option.value }]),
+    ),
     budget: { maxPrice: 10000 },
-    apartment: { roomType: "apartment" },
+    luxury: { minPrice: 30000 },
 };
 
 export default function Home() {
@@ -104,6 +109,27 @@ export default function Home() {
                 </div>
             </div>
 
+            {/* FIND ROOMS NEAR YOU — opens the interactive nearby-rooms map */}
+            <div className="max-w-[1400px] mx-auto px-6 mb-2">
+                <Link
+                    href="/nearby"
+                    className="group flex items-center justify-between gap-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-2xl px-5 py-4 shadow-sm hover:shadow-md transition-all"
+                >
+                    <span className="flex items-center gap-3">
+                        <span className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+                            <Navigation className="w-4.5 h-4.5" />
+                        </span>
+                        <span>
+                            <span className="block text-sm font-extrabold tracking-tight">Find Rooms Near You</span>
+                            <span className="block text-xs text-white/80">Explore available rooms around your location on a live map.</span>
+                        </span>
+                    </span>
+                    <span className="text-xs font-bold bg-white/15 group-hover:bg-white/25 px-3 py-1.5 rounded-lg transition-colors shrink-0">
+                        Open map →
+                    </span>
+                </Link>
+            </div>
+
             <div className="max-w-[1400px] mx-auto px-6 py-6 flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
                 {/* Categories */}
                 <div className="flex flex-wrap items-center gap-2.5">
@@ -117,7 +143,7 @@ export default function Home() {
                                 }`}
                         >
                             <span>{cat.icon}</span>
-                            {cat.name}
+                            {cat.label}
                         </button>
                     ))}
                 </div>

@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft, Building2, CheckCircle2, CircleDollarSign, House, MapPin, ShieldCheck, Sparkles } from 'lucide-react';
 import { useSaveRoom } from '@/app/hooks/useRoom';
 import { useMyKyc } from '@/app/hooks/useAuth';
+import { ROOM_TYPE_OPTIONS } from '@/app/lib/roomTypes';
 
 const Map = dynamic(() => import('@/components/Map'), { ssr: false });
 
@@ -20,6 +21,7 @@ interface RoomFormState {
     rules: string;
     facilities: string;
     roomType: string;
+    sharingType: 'PRIVATE' | 'SHARED';
     floorNumber: string;
     totalRooms: string;
     address: string;
@@ -30,7 +32,10 @@ interface RoomFormState {
 
 const tenantOptions = ['STUDENTS', 'WORKING_PROFESSIONALS', 'FAMILIES', 'MALE', 'FEMALE', 'ANY'];
 const statusOptions = ['AVAILABLE', 'BOOKED', 'MAINTENANCE', 'UNAVAILABLE'];
-const roomTypeOptions = ['Single', 'Shared', 'Studio', 'Master'];
+const sharingTypeOptions = [
+    { value: 'PRIVATE' as const, label: 'Private', hint: 'Normal rental flow' },
+    { value: 'SHARED' as const, label: 'Shared', hint: 'Enables the roommate finder' },
+];
 
 const createInitialState = (propertyId: string): RoomFormState => ({
     roomTitle: '',
@@ -41,7 +46,8 @@ const createInitialState = (propertyId: string): RoomFormState => ({
     preferredTenants: ['ANY'],
     rules: '',
     facilities: '',
-    roomType: 'Single',
+    roomType: 'APARTMENT',
+    sharingType: 'PRIVATE',
     floorNumber: '',
     totalRooms: '',
     address: '',
@@ -150,6 +156,7 @@ export default function NewRoomPage() {
         if (facilitiesArr.length) payload.facilities = facilitiesArr;
 
         if (form.roomType) payload.roomType = form.roomType;
+        payload.sharingType = form.sharingType;
         if (form.floorNumber) payload.floorNumber = Number(form.floorNumber);
         if (form.totalRooms) payload.totalRooms = Number(form.totalRooms);
 
@@ -299,10 +306,31 @@ export default function NewRoomPage() {
                                     </div>
 
                                     <div>
-                                        <label className="mb-2 block text-sm font-semibold">Room type</label>
+                                        <label className="mb-2 block text-sm font-semibold">Room category</label>
                                         <select name="roomType" value={form.roomType} onChange={handleChange} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none ring-0 focus:border-indigo-400 dark:border-slate-800 dark:bg-slate-950">
-                                            {roomTypeOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                                            {ROOM_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                                         </select>
+                                    </div>
+
+                                    <div className="md:col-span-2">
+                                        <label className="mb-2 block text-sm font-semibold">Room type</label>
+                                        <div className="grid gap-3 sm:grid-cols-2">
+                                            {sharingTypeOptions.map((option) => {
+                                                const selected = form.sharingType === option.value;
+                                                return (
+                                                    <button
+                                                        key={option.value}
+                                                        type="button"
+                                                        onClick={() => setForm((prev) => ({ ...prev, sharingType: option.value }))}
+                                                        className={`rounded-2xl border px-4 py-3 text-left transition ${selected ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200 dark:border-indigo-400 dark:bg-indigo-950/50 dark:ring-indigo-900' : 'border-slate-200 bg-white hover:border-indigo-300 dark:border-slate-800 dark:bg-slate-950'}`}
+                                                    >
+                                                        <span className="block text-sm font-bold">{option.label}</span>
+                                                        <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">{option.hint}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Shared rooms let interested tenants find roommates for this room.</p>
                                     </div>
                                 </div>
                             )}
@@ -394,6 +422,10 @@ export default function NewRoomPage() {
                                         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                                             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Status</p>
                                             <p className="mt-2 text-sm font-semibold">{form.status}</p>
+                                        </div>
+                                        <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Room type</p>
+                                            <p className="mt-2 text-sm font-semibold">{form.sharingType === 'SHARED' ? 'Shared room' : 'Private room'}</p>
                                         </div>
                                         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                                             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Preferred tenants</p>

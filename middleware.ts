@@ -26,6 +26,8 @@ const ROLE_ROUTES: Record<string, string[]> = {
         "/settings",
         "/kyc",
         "/room",
+        "/roommates",
+        "/nearby",
     ],
 };
 

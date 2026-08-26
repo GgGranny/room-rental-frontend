@@ -1,9 +1,11 @@
-import { DollarSign, LayoutGrid, Star, User } from "lucide-react";
+import { BedDouble, Building2, DollarSign, Home, Lock, Star, Users, Warehouse } from "lucide-react";
+import { FILTERABLE_ROOM_TYPES } from "@/app/lib/roomTypes";
 
 
 type FilterIconsType = {
     id: number;
-    name: string;
+    name: string;   // stable lowercase key used by the home page + categoryFilters
+    label: string;  // human-readable chip text
     href: string;
     icon?: React.ReactNode;
 }
@@ -12,29 +14,26 @@ const style = {
     height: 15
 }
 
+// One icon per room-type category value (see app/lib/roomTypes).
+const roomTypeIcon: Record<string, React.ReactNode> = {
+    PRIVATE: <Lock style={style} />,
+    SHARED: <Users style={style} />,
+    APARTMENT: <Building2 style={style} />,
+    HOUSE: <Home style={style} />,
+    HOSTEL: <BedDouble style={style} />,
+    GARAGE: <Warehouse style={style} />,
+};
+
+// Home-page quick filters: every room type except OTHER/COMMERCIAL (derived from
+// the shared roomTypes source of truth), followed by the price-range shortcuts.
 export const filterIcons: FilterIconsType[] = [
-    {
-        id: 0,
-        name: "luxury",
+    ...FILTERABLE_ROOM_TYPES.map((option, index) => ({
+        id: index,
+        name: option.value.toLowerCase(),
+        label: option.label,
         href: "#",
-        icon: <Star style={style} />
-    },
-    {
-        id: 1,
-        name: "single",
-        href: "#",
-        icon: <User style={style} />
-    },
-    {
-        id: 2,
-        name: "budget",
-        href: "#",
-        icon: <DollarSign style={style} />
-    },
-    {
-        id: 3,
-        name: "apartment",
-        href: "#",
-        icon: <LayoutGrid style={style} />
-    }
-]
+        icon: roomTypeIcon[option.value],
+    })),
+    { id: 100, name: "budget", label: "Budget", href: "#", icon: <DollarSign style={style} /> },
+    { id: 101, name: "luxury", label: "Luxury", href: "#", icon: <Star style={style} /> },
+];

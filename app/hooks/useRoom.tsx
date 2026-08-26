@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { RoomService, RoomSearchParams } from "../services/roomService";
+import { RoomService, RoomSearchParams, NearbySearchParams } from "../services/roomService";
 
 
 const Room_ID = "ROOM";
@@ -16,6 +16,16 @@ export function useSearchRooms(params: RoomSearchParams, enabled = true) {
         queryKey: [Room_ID, "search", params],
         queryFn: () => RoomService.searchRooms(params),
         enabled,
+    });
+}
+
+// "Find Rooms Near You": nearby AVAILABLE rooms for the map. Enabled only once we
+// actually have the user's coordinates (i.e. after location permission is granted).
+export function useNearbyRooms(params: NearbySearchParams | null) {
+    return useQuery({
+        queryKey: [Room_ID, "nearby", params],
+        queryFn: () => RoomService.getNearbyRooms(params as NearbySearchParams),
+        enabled: Boolean(params),
     });
 }
 

@@ -44,6 +44,8 @@ function navigateByAction(action?: string) {
             return "/kyc";
         case "OPEN_PAYMENT":
             return "/landlord/featured";
+        case "OPEN_ROOMMATE":
+            return "/roommates";
         default:
             return "/home";
     }
