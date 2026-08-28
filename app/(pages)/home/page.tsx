@@ -43,10 +43,21 @@ export default function Home() {
     const search = useSearchRooms(appliedQuery ?? {}, isSearching);
 
     const activeQuery = isSearching ? search : recommended;
-    const rooms: RoomListItem[] = useMemo(() => {
-        const list = (activeQuery.data as RoomListItem[]) ?? [];
-        return [...list].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
-    }, [activeQuery.data]);
+const rooms: RoomListItem[] = useMemo(() => {
+            const list = (activeQuery.data as RoomListItem[]) ?? [];
+            const featured = list.filter((r) => r.featured);
+            const nonFeatured = list.filter((r) => !r.featured);
+            // Shuffle each subset to achieve random order while keeping featured first.
+            const shuffle = (arr: RoomListItem[]) => {
+                const copy = [...arr];
+                for (let i = copy.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [copy[i], copy[j]] = [copy[j], copy[i]];
+                }
+                return copy;
+            };
+            return [...shuffle(featured), ...shuffle(nonFeatured)];
+        }, [activeQuery.data]);
 
     useEffect(() => {
         if (!profileData) return;
