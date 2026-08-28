@@ -1,6 +1,7 @@
 "use client";
 
 import { useCreateProperty } from "@/app/hooks/useProperty";
+import { useCurrentUser } from "@/app/hooks/useAuth";
 import {
     ArrowLeft,
     Building2,
@@ -55,13 +56,24 @@ export default function AddPropertyPage() {
         }));
     };
 
-    const handleSubmit = async (
+    const { data: currentUserData, isLoading: userLoading, isError: userError } = useCurrentUser();
+
+const handleSubmit = async (
         event: FormEvent<HTMLFormElement>
     ) => {
         event.preventDefault();
 
-        const landlordId = localStorage.getItem("landlordId");
+        // Wait for the current user query to resolve if needed.
+        if (userLoading) {
+            toast.message("Loading user data…");
+            return;
+        }
+        if (userError) {
+            toast.error("Failed to load user data. Please refresh.");
+            return;
+        }
 
+        const landlordId = (currentUserData as any)?.data?.landlordId;
         if (!landlordId) {
             toast.error(
                 "Your landlord profile is not available. Please sign in again."
