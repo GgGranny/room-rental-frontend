@@ -110,6 +110,11 @@ export const roommateService = {
         unwrap(await apiClient.get<ApiResponse<RoommateRequestItem[]>>("roommates/requests/sent")),
     getReceivedRequests: async () =>
         unwrap(await apiClient.get<ApiResponse<RoommateRequestItem[]>>("roommates/requests/received")),
+    // The counterpart tenant's roommate profile (+ compatibility) for a request I'm
+    // part of. Backs "click a request → view the tenant's details" before deciding.
+    // The backend returns 403 for anyone who isn't a participant of the request.
+    getRequestProfile: async (requestId: string) =>
+        unwrap(await apiClient.get<ApiResponse<RoommateCandidate>>(`roommates/requests/${requestId}/profile`)),
     acceptRequest: (id: string) => apiClient.patch(`roommates/requests/${id}/accept`, {}),
     rejectRequest: (id: string) => apiClient.patch(`roommates/requests/${id}/reject`, {}),
     cancelRequest: (id: string) => apiClient.patch(`roommates/requests/${id}/cancel`, {}),

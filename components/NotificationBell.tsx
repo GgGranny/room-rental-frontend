@@ -31,6 +31,9 @@ function routeFor(item: AppNotification): string {
         case "ROOMMATE_REQUEST_ACCEPTED":
         case "ROOMMATE_REQUEST_REJECTED":
             return "/roommates";
+        case "ROOMMATE_MATCH_CREATED":
+        case "NEW_MESSAGE":
+            return "/roommates?tab=matches";
         default:
             return "/home";
     }

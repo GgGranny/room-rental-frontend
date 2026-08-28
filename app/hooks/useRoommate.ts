@@ -91,6 +91,18 @@ export function useReceivedRequests() {
     });
 }
 
+// Tenant: the counterpart tenant's roommate profile for a request I'm part of.
+// Powers "click a request → view the tenant's details" before accepting/rejecting.
+// Only fetches while a request id is provided (i.e. the detail modal is open).
+export function useRequestProfile(requestId?: string) {
+    return useQuery({
+        queryKey: [ROOMMATE_KEY, "requestProfile", requestId],
+        queryFn: () => roommateService.getRequestProfile(requestId || ""),
+        enabled: Boolean(requestId),
+        retry: false,
+    });
+}
+
 export function useSendRoommateRequest() {
     const queryClient = useQueryClient();
     return useMutation({

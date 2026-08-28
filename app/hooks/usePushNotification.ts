@@ -46,6 +46,8 @@ function navigateByAction(action?: string) {
             return "/landlord/featured";
         case "OPEN_ROOMMATE":
             return "/roommates";
+        case "OPEN_CHAT":
+            return "/roommates?tab=matches";
         default:
             return "/home";
     }
