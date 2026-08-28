@@ -8,10 +8,12 @@ import {
     ArrowRight,
     BedDouble,
     Check,
+    Eye,
     HeartHandshake,
     Inbox,
     Loader2,
     MailX,
+    MessageCircle,
     Search,
     ShieldCheck,
     User as UserIcon,
@@ -34,12 +36,16 @@ import {
     useSendRoommateRequest,
 } from "@/app/hooks/useRoommate";
 import { useRoommateEvents } from "@/app/hooks/useRoommateRealtime";
+import { useMyMatches } from "@/app/hooks/useChat";
 import type {
     Cleanliness,
     MapOpportunity,
     RoommateRequestItem,
     SleepSchedule,
 } from "@/app/services/roommateService";
+import type { RoommateMatch } from "@/app/services/chatService";
+import RoommateChatModal from "@/components/RoommateChatModal";
+import RoommateRequestDetailModal from "@/components/RoommateRequestDetailModal";
 
 // Leaflet touches window — client-only, same pattern as components/Map.tsx.
 const RoommateMap = dynamic(() => import("@/components/RoommateMap"), {
@@ -49,14 +55,17 @@ const RoommateMap = dynamic(() => import("@/components/RoommateMap"), {
 
 const NEPAL_CENTER = { lat: 27.7172, lng: 85.324 };
 
-type Tab = "find" | "profile" | "sent" | "received";
+type Tab = "find" | "matches" | "profile" | "sent" | "received";
 
 const tabs: Array<{ key: Tab; label: string }> = [
     { key: "find", label: "Find Roommate" },
+    { key: "matches", label: "Matches" },
     { key: "profile", label: "My Profile" },
     { key: "sent", label: "Sent Requests" },
     { key: "received", label: "Received Requests" },
 ];
+
+const TAB_KEYS: Tab[] = ["find", "matches", "profile", "sent", "received"];
 
 const statusBadge: Record<string, string> = {
     PENDING: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400",
@@ -82,12 +91,20 @@ function RoommatesInner() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const roomIdParam = searchParams.get("roomId") || "";
-    const [tab, setTab] = useState<Tab>("find");
+    const tabParam = searchParams.get("tab") || "";
+    const [tab, setTab] = useState<Tab>(TAB_KEYS.includes(tabParam as Tab) ? (tabParam as Tab) : "find");
     const [selectedRoomId, setSelectedRoomId] = useState<string>(roomIdParam);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (roomIdParam) setSelectedRoomId(roomIdParam);
     }, [roomIdParam]);
+
+    // Deep links (e.g. a match / new-message notification) can preselect a tab.
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (tabParam && TAB_KEYS.includes(tabParam as Tab)) setTab(tabParam as Tab);
+    }, [tabParam]);
 
     const { data: profileData } = useMyProfile();
     const user = profileData?.data;
@@ -128,10 +145,11 @@ function RoommatesInner() {
                     ))}
                 </nav>
 
-                {tab === "find" && <FindTab selectedRoomId={selectedRoomId} onSelectRoom={setSelectedRoomId} kycApproved={!!isKycApproved} user={{ kycStatus: user?.kycStatus, kycSubmitted: user?.kycSubmitted }} />}
+                {tab === "find" && <FindTab selectedRoomId={selectedRoomId} onSelectRoom={setSelectedRoomId} kycApproved={!!isKycApproved} user={{ kycStatus: user?.kycStatus, kycSubmitted: user?.kycSubmitted }} onOpenMatches={() => setTab("matches")} />}
+                {tab === "matches" && <MatchesTab />}
                 {tab === "profile" && <ProfileTab />}
                 {tab === "sent" && <SentRequestsTab kycApproved={!!isKycApproved} />}
-                {tab === "received" && <ReceivedRequestsTab />}
+                {tab === "received" && <ReceivedRequestsTab onOpenMatches={() => setTab("matches")} />}
             </main>
         </div>
     );
@@ -164,11 +182,13 @@ function FindTab({
     onSelectRoom,
     kycApproved,
     user,
+    onOpenMatches,
 }: {
     selectedRoomId: string;
     onSelectRoom: (roomId: string) => void;
     kycApproved: boolean;
     user?: { kycStatus?: string | null; kycSubmitted?: boolean };
+    onOpenMatches: () => void;
 }) {
     const { data: interests = [], isLoading: interestsLoading } = useMyInterests();
     const expressInterest = useExpressInterest();
@@ -193,6 +213,7 @@ function FindTab({
     });
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSelectedUserId(null);
     }, [selectedRoomId]);
 
@@ -255,7 +276,9 @@ function FindTab({
         setBusyUserId(opportunity.userId);
         try {
             await acceptIncoming.mutateAsync(opportunity.pendingIncomingRequestId);
-            toast.success("Roommate request accepted.");
+            toast.success("Roommate request accepted — you can now chat.", {
+                action: { label: "Open chat", onClick: onOpenMatches },
+            });
         } catch (error) {
             // 409 from the backend ("no longer available") surfaces here verbatim.
             toast.error(errorMessage(error));
@@ -416,6 +439,7 @@ function FindTab({
                                 busy={busyUserId === selected.userId}
                                 onSend={() => void handleSend(selected)}
                                 onAccept={() => void handleAccept(selected)}
+                                onMessage={onOpenMatches}
                             />
                         )}
                     </>
@@ -454,11 +478,13 @@ function OpportunityCard({
     busy,
     onSend,
     onAccept,
+    onMessage,
 }: {
     opportunity: MapOpportunity;
     busy: boolean;
     onSend: () => void;
     onAccept: () => void;
+    onMessage: () => void;
 }) {
     const hasIncoming = Boolean(opportunity.pendingIncomingRequestId);
     return (
@@ -502,8 +528,8 @@ function OpportunityCard({
                         Request Sent
                     </button>
                 ) : opportunity.myRequestStatus === "ACCEPTED" ? (
-                    <button disabled className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-100 px-4 py-2.5 text-xs font-bold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
-                        Accepted
+                    <button onClick={onMessage} className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-indigo-700">
+                        <MessageCircle className="h-3.5 w-3.5" /> Message Roommate
                     </button>
                 ) : (
                     <button onClick={onSend} disabled={busy} className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-indigo-700 disabled:opacity-60">
@@ -633,11 +659,13 @@ function ProfileTab() {
 function SentRequestsTab({ kycApproved }: { kycApproved: boolean }) {
     const { data: requests = [], isLoading } = useSentRequests();
     const cancelRequest = useCancelRoommateRequest();
+    const [activeRequest, setActiveRequest] = useState<RoommateRequestItem | null>(null);
 
-    const cancel = async (id: string) => {
-        if (!confirm("Cancel this pending roommate request?")) return;
+    const cancel = async (id: string, opts?: { skipConfirm?: boolean }) => {
+        if (!opts?.skipConfirm && !confirm("Cancel this pending roommate request?")) return;
         try {
             await cancelRequest.mutateAsync(id);
+            setActiveRequest(null);
             toast.success("Request cancelled.");
         } catch (error) {
             toast.error(error instanceof Error ? error.message.replace(/^Error fetching .*: /, "") : "Unable to cancel.");
@@ -651,30 +679,54 @@ function SentRequestsTab({ kycApproved }: { kycApproved: boolean }) {
         return <EmptyState icon={<MailX className="h-8 w-8" />} title="You haven't sent any roommate requests yet." description={kycApproved ? "Find a shared room and send your first request." : "Approved KYC is required before sending requests."} />;
     }
     return (
-        <div className="space-y-3">
-            {requests.map((request) => (
-                <RequestRow key={request.id} request={request} perspective="sent">
-                    {request.status === "PENDING" && (
-                        <button onClick={() => cancel(request.id)} disabled={cancelRequest.isPending} className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 disabled:opacity-60 dark:border-red-900/60 dark:hover:bg-red-950/30">
-                            Cancel
-                        </button>
-                    )}
-                </RequestRow>
-            ))}
-        </div>
+        <>
+            <div className="space-y-3">
+                {requests.map((request) => (
+                    <RequestRow key={request.id} request={request} perspective="sent" onOpen={() => setActiveRequest(request)}>
+                        {request.status === "PENDING" && (
+                            <button onClick={() => cancel(request.id)} disabled={cancelRequest.isPending} className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 disabled:opacity-60 dark:border-red-900/60 dark:hover:bg-red-950/30">
+                                Cancel
+                            </button>
+                        )}
+                    </RequestRow>
+                ))}
+            </div>
+            <RoommateRequestDetailModal
+                open={Boolean(activeRequest)}
+                onClose={() => setActiveRequest(null)}
+                request={activeRequest}
+                perspective="sent"
+            >
+                {activeRequest?.status === "PENDING" && (
+                    <button onClick={() => cancel(activeRequest.id, { skipConfirm: true })} disabled={cancelRequest.isPending} className="rounded-lg border border-red-200 px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-50 disabled:opacity-60 dark:border-red-900/60 dark:hover:bg-red-950/30">
+                        Cancel Request
+                    </button>
+                )}
+            </RoommateRequestDetailModal>
+        </>
     );
 }
 
-function ReceivedRequestsTab() {
+function ReceivedRequestsTab({ onOpenMatches }: { onOpenMatches: () => void }) {
     const { data: requests = [], isLoading } = useReceivedRequests();
     const acceptRequest = useRespondRoommateRequest("accept");
     const rejectRequest = useRespondRoommateRequest("reject");
+    const [activeRequest, setActiveRequest] = useState<RoommateRequestItem | null>(null);
 
-    const respond = async (action: "accept" | "reject", id: string) => {
-        if (!confirm(action === "accept" ? "Accept this roommate request?" : "Reject this roommate request?")) return;
+    // From a row the browser confirm() guards the action; from the detail modal the
+    // modal itself is the deliberate step, so skipConfirm avoids a redundant prompt.
+    const respond = async (action: "accept" | "reject", id: string, opts?: { skipConfirm?: boolean }) => {
+        if (!opts?.skipConfirm && !confirm(action === "accept" ? "Accept this roommate request?" : "Reject this roommate request?")) return;
         try {
             await (action === "accept" ? acceptRequest.mutateAsync(id) : rejectRequest.mutateAsync(id));
-            toast.success(action === "accept" ? "Roommate request accepted." : "Roommate request rejected.");
+            setActiveRequest(null);
+            if (action === "accept") {
+                toast.success("Roommate request accepted — you can now chat.", {
+                    action: { label: "Open chat", onClick: onOpenMatches },
+                });
+            } else {
+                toast.success("Roommate request rejected.");
+            }
         } catch (error) {
             toast.error(error instanceof Error ? error.message.replace(/^Error fetching .*: /, "") : "Unable to update request.");
         }
@@ -687,41 +739,148 @@ function ReceivedRequestsTab() {
         return <EmptyState icon={<Inbox className="h-8 w-8" />} title="You don't have any roommate requests." description='Express interest in shared rooms so other tenants can find and request you.' />;
     }
     return (
-        <div className="space-y-3">
-            {requests.map((request) => (
-                <RequestRow key={request.id} request={request} perspective="received">
-                    {request.status === "PENDING" && (
-                        <div className="flex flex-wrap gap-2">
-                            <button onClick={() => respond("accept", request.id)} disabled={acceptRequest.isPending} className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-60"><Check className="h-3.5 w-3.5" /> Accept</button>
-                            <button onClick={() => respond("reject", request.id)} disabled={rejectRequest.isPending} className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 disabled:opacity-60 dark:border-red-900/60 dark:hover:bg-red-950/30"><X className="h-3.5 w-3.5" /> Reject</button>
-                        </div>
-                    )}
-                </RequestRow>
-            ))}
-        </div>
+        <>
+            <div className="space-y-3">
+                {requests.map((request) => (
+                    <RequestRow key={request.id} request={request} perspective="received" onOpen={() => setActiveRequest(request)}>
+                        {request.status === "PENDING" ? (
+                            <div className="flex flex-wrap gap-2">
+                                <button onClick={() => respond("accept", request.id)} disabled={acceptRequest.isPending} className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-60"><Check className="h-3.5 w-3.5" /> Accept</button>
+                                <button onClick={() => respond("reject", request.id)} disabled={rejectRequest.isPending} className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 disabled:opacity-60 dark:border-red-900/60 dark:hover:bg-red-950/30"><X className="h-3.5 w-3.5" /> Reject</button>
+                            </div>
+                        ) : request.status === "ACCEPTED" ? (
+                            <button onClick={onOpenMatches} className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-indigo-700"><MessageCircle className="h-3.5 w-3.5" /> Message</button>
+                        ) : null}
+                    </RequestRow>
+                ))}
+            </div>
+            <RoommateRequestDetailModal
+                open={Boolean(activeRequest)}
+                onClose={() => setActiveRequest(null)}
+                request={activeRequest}
+                perspective="received"
+            >
+                {activeRequest?.status === "PENDING" ? (
+                    <>
+                        <button onClick={() => respond("reject", activeRequest.id, { skipConfirm: true })} disabled={rejectRequest.isPending} className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-50 disabled:opacity-60 dark:border-red-900/60 dark:hover:bg-red-950/30"><X className="h-3.5 w-3.5" /> Reject</button>
+                        <button onClick={() => respond("accept", activeRequest.id, { skipConfirm: true })} disabled={acceptRequest.isPending} className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-60"><Check className="h-3.5 w-3.5" /> Accept Request</button>
+                    </>
+                ) : activeRequest?.status === "ACCEPTED" ? (
+                    <button onClick={() => { setActiveRequest(null); onOpenMatches(); }} className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-700"><MessageCircle className="h-3.5 w-3.5" /> Message Roommate</button>
+                ) : null}
+            </RoommateRequestDetailModal>
+        </>
     );
 }
 
-// Shows the other tenant first depending on whether I sent or received the request.
-function RequestRow({ request, perspective, children }: { request: RoommateRequestItem; perspective: "sent" | "received"; children?: React.ReactNode }) {
-    const other = perspective === "sent" ? request.recipient : request.requester;
+// Confirmed roommate matches — each unlocks a private chat with the other tenant.
+function MatchesTab() {
+    const { data: matches = [], isLoading, isError } = useMyMatches();
+    const [active, setActive] = useState<RoommateMatch | null>(null);
+
+    if (isLoading) {
+        return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-indigo-600" /></div>;
+    }
+    if (isError) {
+        return <EmptyState icon={<MessageCircle className="h-8 w-8" />} title="Couldn't load your matches." description="Please try again in a moment." />;
+    }
+    if (matches.length === 0) {
+        return (
+            <EmptyState
+                icon={<HeartHandshake className="h-8 w-8" />}
+                title="No roommate matches yet."
+                description="When you accept a roommate request — or someone accepts yours — your match appears here and a private chat opens."
+            />
+        );
+    }
+    return (
+        <>
+            <div className="space-y-3">
+                {matches.map((match) => (
+                    <MatchRow key={match.matchId} match={match} onOpen={() => match.conversationId && setActive(match)} />
+                ))}
+            </div>
+            <RoommateChatModal
+                open={Boolean(active?.conversationId)}
+                conversationId={active?.conversationId ?? ""}
+                peerName={active?.peer.name}
+                peerAvatarUrl={active?.peer.profilePictureUrl}
+                roomTitle={active?.roomTitle}
+                matchStatus={active?.status}
+                onClose={() => setActive(null)}
+            />
+        </>
+    );
+}
+
+function MatchRow({ match, onOpen }: { match: RoommateMatch; onOpen: () => void }) {
+    const ended = match.status === "ENDED";
     return (
         <article className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between dark:border-slate-800 dark:bg-slate-900">
             <div className="flex min-w-0 items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300">
-                    {other.profilePictureUrl ? (
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300">
+                    {match.peer.profilePictureUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={other.profilePictureUrl} alt={other.name} className="h-full w-full object-cover" />
+                        <img src={match.peer.profilePictureUrl} alt={match.peer.name} className="h-full w-full object-cover" />
                     ) : (
                         <UserIcon className="h-5 w-5" />
                     )}
                 </div>
                 <div className="min-w-0">
-                    <p className="truncate text-sm font-extrabold text-slate-900 dark:text-white">{other.name}</p>
-                    <p className="flex items-center gap-1 truncate text-xs text-slate-500 dark:text-slate-400"><BedDouble className="h-3 w-3 shrink-0" /> {request.roomTitle}</p>
-                    <p className="text-[11px] text-slate-400">{new Date(request.createdAt).toLocaleDateString()} · {formatNpr(request.roomPrice)}/mo</p>
+                    <p className="truncate text-sm font-extrabold text-slate-900 dark:text-white">{match.peer.name}</p>
+                    <p className="flex items-center gap-1 truncate text-xs text-slate-500 dark:text-slate-400"><BedDouble className="h-3 w-3 shrink-0" /> {match.roomTitle}</p>
+                    <p className="text-[11px] text-slate-400">Matched {new Date(match.createdAt).toLocaleDateString()}</p>
                 </div>
             </div>
+            <div className="flex shrink-0 items-center gap-2 self-end sm:self-center">
+                {match.unreadCount > 0 && (
+                    <span className="grid h-5 min-w-5 place-items-center rounded-full bg-indigo-600 px-1.5 text-[10px] font-bold text-white">
+                        {match.unreadCount > 9 ? "9+" : match.unreadCount}
+                    </span>
+                )}
+                {ended && <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">Ended</span>}
+                <button onClick={onOpen} disabled={!match.conversationId} className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-700 disabled:opacity-60">
+                    <MessageCircle className="h-3.5 w-3.5" /> {ended ? "View chat" : "Message"}
+                </button>
+            </div>
+        </article>
+    );
+}
+
+// Shows the other tenant first depending on whether I sent or received the request.
+// The identity block is a button (when onOpen is provided) that opens the detail
+// modal — "click a request → view the tenant's details".
+function RequestRow({ request, perspective, onOpen, children }: { request: RoommateRequestItem; perspective: "sent" | "received"; onOpen?: () => void; children?: React.ReactNode }) {
+    const other = perspective === "sent" ? request.recipient : request.requester;
+    const identity = (
+        <>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300">
+                {other.profilePictureUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={other.profilePictureUrl} alt={other.name} className="h-full w-full object-cover" />
+                ) : (
+                    <UserIcon className="h-5 w-5" />
+                )}
+            </div>
+            <div className="min-w-0">
+                <p className="flex items-center gap-1.5 truncate text-sm font-extrabold text-slate-900 dark:text-white">
+                    {other.name}
+                    {onOpen && <Eye className="h-3.5 w-3.5 shrink-0 text-indigo-500" />}
+                </p>
+                <p className="flex items-center gap-1 truncate text-xs text-slate-500 dark:text-slate-400"><BedDouble className="h-3 w-3 shrink-0" /> {request.roomTitle}</p>
+                <p className="text-[11px] text-slate-400">{new Date(request.createdAt).toLocaleDateString()} · {formatNpr(request.roomPrice)}/mo</p>
+            </div>
+        </>
+    );
+    return (
+        <article className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between dark:border-slate-800 dark:bg-slate-900">
+            {onOpen ? (
+                <button type="button" onClick={onOpen} className="flex min-w-0 items-start gap-3 rounded-xl text-left transition hover:opacity-80" title="View tenant details">
+                    {identity}
+                </button>
+            ) : (
+                <div className="flex min-w-0 items-start gap-3">{identity}</div>
+            )}
             <div className="flex shrink-0 items-center gap-2 self-end sm:self-center">
                 <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${statusBadge[request.status]}`}>{request.status}</span>
                 {children}
