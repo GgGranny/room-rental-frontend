@@ -146,7 +146,7 @@ function RoommatesInner() {
                 </nav>
 
                 {tab === "find" && <FindTab selectedRoomId={selectedRoomId} onSelectRoom={setSelectedRoomId} kycApproved={!!isKycApproved} user={{ kycStatus: user?.kycStatus, kycSubmitted: user?.kycSubmitted }} onOpenMatches={() => setTab("matches")} />}
-                {tab === "matches" && <MatchesTab />}
+                {tab === "matches" && <MatchesTab roomId={selectedRoomId} />}
                 {tab === "profile" && <ProfileTab />}
                 {tab === "sent" && <SentRequestsTab kycApproved={!!isKycApproved} />}
                 {tab === "received" && <ReceivedRequestsTab onOpenMatches={() => setTab("matches")} />}
@@ -774,44 +774,106 @@ function ReceivedRequestsTab({ onOpenMatches }: { onOpenMatches: () => void }) {
 }
 
 // Confirmed roommate matches — each unlocks a private chat with the other tenant.
-function MatchesTab() {
-    const { data: matches = [], isLoading, isError } = useMyMatches();
-    const [active, setActive] = useState<RoommateMatch | null>(null);
+function MatchesTab({ roomId }: { roomId?: string }) {
+  // Existing matches (already accepted roommates)
+  const { data: matches = [], isLoading: matchesLoading, isError: matchesError } = useMyMatches();
+  const [active, setActive] = useState<RoommateMatch | null>(null);
 
-    if (isLoading) {
-        return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-indigo-600" /></div>;
+  // Pending incoming requests for the selected room (if any)
+  const { data: mapData, isLoading: mapLoading, isError: mapError } = useRoommateMap(roomId ?? "");
+  const pendingOps = mapData?.opportunities?.filter((op) => op.pendingIncomingRequestId) ?? [];
+  const acceptMutation = useRespondRoommateRequest("accept");
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const handleAccept = async (requestId: string) => {
+    setBusyId(requestId);
+    try {
+      await acceptMutation.mutateAsync(requestId);
+      toast.success("Roommate request accepted — you can now chat.");
+    } catch (e) {
+      toast.error(errorMessage(e));
+    } finally {
+      setBusyId(null);
     }
-    if (isError) {
-        return <EmptyState icon={<MessageCircle className="h-8 w-8" />} title="Couldn't load your matches." description="Please try again in a moment." />;
-    }
-    if (matches.length === 0) {
-        return (
-            <EmptyState
-                icon={<HeartHandshake className="h-8 w-8" />}
-                title="No roommate matches yet."
-                description="When you accept a roommate request — or someone accepts yours — your match appears here and a private chat opens."
-            />
-        );
-    }
-    return (
-        <>
-            <div className="space-y-3">
-                {matches.map((match) => (
-                    <MatchRow key={match.matchId} match={match} onOpen={() => match.conversationId && setActive(match)} />
-                ))}
+  };
+
+  if (matchesLoading || mapLoading) {
+    return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-indigo-600" /></div>;
+  }
+  if (matchesError || mapError) {
+    return <EmptyState icon={<MessageCircle className="h-8 w-8" />} title="Couldn't load data" description="Please try again later." />;
+  }
+
+  // Render pending requests (if any)
+  const pendingSection = pendingOps.length > 0 && (
+    <section className="mt-8">
+      <h2 className="text-xl font-semibold mb-4">Pending Roommate Requests</h2>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {pendingOps.map((op) => (
+          <div key={op.userId} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 flex flex-col items-center">
+            <div className="w-16 h-16 rounded-full overflow-hidden mb-2 bg-indigo-100 flex items-center justify-center">
+              {op.profilePictureUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={op.profilePictureUrl} alt={op.name} className="w-full h-full object-cover" />
+              ) : (
+                <UserIcon className="w-8 h-8 text-indigo-600" />
+              )}
             </div>
-            <RoommateChatModal
-                open={Boolean(active?.conversationId)}
-                conversationId={active?.conversationId ?? ""}
-                peerName={active?.peer.name}
-                peerAvatarUrl={active?.peer.profilePictureUrl}
-                roomTitle={active?.roomTitle}
-                matchStatus={active?.status}
-                onClose={() => setActive(null)}
-            />
-        </>
+            <h3 className="text-center font-medium text-slate-800 dark:text-slate-200">{op.name}</h3>
+            {op.budget && <p className="text-sm text-slate-600 dark:text-slate-400">Budget: Rs {op.budget}</p>}
+            {op.bio && <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 line-clamp-2">{op.bio}</p>}
+            <button
+              onClick={() => handleAccept(op.pendingIncomingRequestId!)}
+              disabled={busyId === op.pendingIncomingRequestId}
+              className="mt-3 inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
+            >
+              {busyId === op.pendingIncomingRequestId ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Accept Request"}
+            </button>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+
+  // Render matches (already accepted)
+  const matchesSection = matches.length > 0 ? (
+    <>
+      <div className="space-y-3 mt-8">
+        {matches.map((match) => (
+          <MatchRow key={match.matchId} match={match} onOpen={() => match.conversationId && setActive(match)} />
+        ))}
+      </div>
+      <RoommateChatModal
+        open={Boolean(active?.conversationId)}
+        conversationId={active?.conversationId ?? ""}
+        peerName={active?.peer.name}
+        peerAvatarUrl={active?.peer.profilePictureUrl}
+        roomTitle={active?.roomTitle}
+        matchStatus={active?.status}
+        onClose={() => setActive(null)}
+      />
+    </>
+  ) : null;
+
+  // If no pending and no matches, show empty state
+  if (!pendingOps.length && matches.length === 0) {
+    return (
+      <EmptyState
+        icon={<HeartHandshake className="h-8 w-8" />}
+        title="No roommate requests yet."
+        description="When other tenants request to share this room, they will appear here."
+      />
     );
+  }
+
+  return (
+    <>
+      {pendingSection}
+      {matchesSection}
+    </>
+  );
 }
+
 
 function MatchRow({ match, onOpen }: { match: RoommateMatch; onOpen: () => void }) {
     const ended = match.status === "ENDED";
