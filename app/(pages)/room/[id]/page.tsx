@@ -97,7 +97,7 @@ export default function RoomDetailsPage() {
     const kycHref = user?.role === "ROLE_LANDLORD" ? "/landlord/kyc" : "/kyc";
     // Tenant-only feature: landlords/admins manage shared rooms but never use
     // the roommate finder themselves.
-    const showRoommateSection = isSharedRoom && user?.role !== "ROLE_LANDLORD" && !isAdmin;
+    const showRoommateSection = isSharedRoom && room?.status === "AVAILABLE" && user?.role !== "ROLE_LANDLORD" && !isAdmin;
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50 transition-colors duration-300">

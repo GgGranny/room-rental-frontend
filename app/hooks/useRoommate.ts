@@ -28,7 +28,11 @@ export function useSaveRoommateProfile() {
     return useMutation({
         mutationFn: ({ mode, body }: { mode: "create" | "update"; body: RoommateProfileRequest }) =>
             mode === "create" ? roommateService.createProfile(body) : roommateService.updateProfile(body),
-        onSuccess: () => invalidateAll(queryClient),
+        onSuccess: () => {
+            invalidateAll(queryClient);
+            // Refresh matches so new conversation appears after acceptance.
+            queryClient.invalidateQueries({ queryKey: ['chat', 'matches'] });
+        },
     });
 }
 
@@ -45,7 +49,11 @@ export function useExpressInterest() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (roomId: string) => roommateService.expressInterest(roomId),
-        onSuccess: () => invalidateAll(queryClient),
+        onSuccess: () => {
+            invalidateAll(queryClient);
+            // Refresh matches so new conversation appears after acceptance.
+            queryClient.invalidateQueries({ queryKey: ['chat', 'matches'] });
+        },
     });
 }
 
@@ -53,7 +61,11 @@ export function useRemoveInterest() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (roomId: string) => roommateService.removeInterest(roomId),
-        onSuccess: () => invalidateAll(queryClient),
+        onSuccess: () => {
+            invalidateAll(queryClient);
+            // Refresh matches so new conversation appears after acceptance.
+            queryClient.invalidateQueries({ queryKey: ['chat', 'matches'] });
+        },
     });
 }
 
@@ -108,7 +120,11 @@ export function useSendRoommateRequest() {
     return useMutation({
         mutationFn: (body: { recipientId: string; roomId: string; message?: string }) =>
             roommateService.sendRequest(body),
-        onSuccess: () => invalidateAll(queryClient),
+        onSuccess: () => {
+            invalidateAll(queryClient);
+            // Refresh matches so new conversation appears after acceptance.
+            queryClient.invalidateQueries({ queryKey: ['chat', 'matches'] });
+        },
     });
 }
 
@@ -116,7 +132,11 @@ export function useRespondRoommateRequest(action: "accept" | "reject") {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (id: string) => (action === "accept" ? roommateService.acceptRequest(id) : roommateService.rejectRequest(id)),
-        onSuccess: () => invalidateAll(queryClient),
+        onSuccess: () => {
+            invalidateAll(queryClient);
+            // Refresh matches so new conversation appears after acceptance.
+            queryClient.invalidateQueries({ queryKey: ['chat', 'matches'] });
+        },
     });
 }
 
@@ -124,6 +144,10 @@ export function useCancelRoommateRequest() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (id: string) => roommateService.cancelRequest(id),
-        onSuccess: () => invalidateAll(queryClient),
+        onSuccess: () => {
+            invalidateAll(queryClient);
+            // Refresh matches so new conversation appears after acceptance.
+            queryClient.invalidateQueries({ queryKey: ['chat', 'matches'] });
+        },
     });
 }

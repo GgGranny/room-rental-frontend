@@ -1,12 +1,14 @@
 "use client";
 
 import { useCheckProfileCompletion, useCurrentUser } from "@/app/hooks/useAuth";
-import { useRecommendedRooms, useSearchRooms } from "@/app/hooks/useRoom";
+import { useRecommendedRooms, useSearchRooms, useNearbyRooms } from "@/app/hooks/useRoom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import { Search, SlidersHorizontal, Building2, Navigation } from "lucide-react";
 import { filterIcons } from "@/app/utils/FilterIcons";
+import { useGeolocation } from "@/app/hooks/useGeolocation";
+import { DEFAULT_RADIUS_KM } from "@/app/lib/nearbyConfig";
 import { FILTERABLE_ROOM_TYPES } from "@/app/lib/roomTypes";
 import Card from "@/components/myui/Card";
 import Hero from "@/components/Hero";
@@ -57,7 +59,37 @@ const rooms: RoomListItem[] = useMemo(() => {
                 return copy;
             };
             return [...shuffle(featured), ...shuffle(nonFeatured)];
-        }, [activeQuery.data]);
+            }, [activeQuery.data]);
+
+            // Discovery subsets (used when not searching)
+            const featuredRooms = useMemo(() => {
+                const list = (recommended?.data as RoomListItem[]) ?? [];
+                return list.filter(r => r.featured);
+            }, [recommended?.data]);
+
+            const nonFeaturedRooms = useMemo(() => {
+                const list = (recommended?.data as RoomListItem[]) ?? [];
+                return list.filter(r => !r.featured);
+            }, [recommended?.data]);
+
+            const recommendedRooms = useMemo(() => {
+                return [...nonFeaturedRooms].sort((a, b) => a.price - b.price);
+            }, [nonFeaturedRooms]);
+
+            const randomRooms = useMemo(() => {
+                const shuffled = [...nonFeaturedRooms].sort(() => Math.random() - 0.5);
+                return shuffled.slice(0, 6);
+            }, [nonFeaturedRooms]);
+
+            // Nearby rooms (find rooms near you)
+            const { status: geoStatus, coords, error: geoError, request: requestGeolocation } = useGeolocation();
+            useEffect(() => {
+                if (geoStatus === "idle") {
+                    requestGeolocation();
+                }
+            }, [geoStatus, requestGeolocation]);
+            const nearbyParams = useMemo(() => (coords ? { latitude: coords.lat, longitude: coords.lng, radius: DEFAULT_RADIUS_KM } : null), [coords]);
+            const nearby = useNearbyRooms(nearbyParams);
 
     useEffect(() => {
         if (!profileData) return;
@@ -161,7 +193,7 @@ const rooms: RoomListItem[] = useMemo(() => {
             </div>
 
             {/* PROPERTY CARDS GRID */}
-            {activeQuery.isPending ? (
+            {isSearching && (activeQuery.isPending ? (
                 <div className="max-w-[1400px] mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     {Array.from({ length: 8 }).map((_, i) => (
                         <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/50 dark:border-slate-700 overflow-hidden animate-pulse">
@@ -191,8 +223,91 @@ const rooms: RoomListItem[] = useMemo(() => {
                 </div>
             ) : (
                 <Card rooms={rooms} favorites={favorites} toggleFavorite={toggleFavorite} />
-            )}
+            ))}
 
+            {/* DISCOVERY SECTIONS */}
+            <>
+                {/* Featured Rooms */}
+                <section className="mt-12">
+                    <h2 className="text-2xl font-bold mb-4">Featured</h2>
+                    {recommended?.isPending && <p className="text-sm text-slate-500">Loading featured rooms…</p>}
+                    {recommended?.isError && <p className="text-sm text-red-600">Failed to load featured rooms.</p>}
+                    {(!recommended?.isPending && !recommended?.isError && featuredRooms.length === 0) && (
+                        <p className="text-sm text-slate-500">No featured rooms at the moment.</p>
+                    )}
+                    {featuredRooms.length > 0 && (
+                        <Card rooms={featuredRooms} favorites={favorites} toggleFavorite={toggleFavorite} />
+                    )}
+                </section>
+
+                {/* Recommended Rooms */}
+                <section className="mt-12">
+                    <h2 className="text-2xl font-bold mb-4">Recommended for you</h2>
+                    {recommended?.isPending && <p className="text-sm text-slate-500">Loading recommended rooms…</p>}
+                    {recommended?.isError && <p className="text-sm text-red-600">Failed to load recommended rooms.</p>}
+                    {(!recommended?.isPending && !recommended?.isError && recommendedRooms.length === 0) && (
+                        <p className="text-sm text-slate-500">No recommendations available.</p>
+                    )}
+                    {recommendedRooms.length > 0 && (
+                        <Card rooms={recommendedRooms} favorites={favorites} toggleFavorite={toggleFavorite} />
+                    )}
+                </section>
+
+                {/* Nearby Rooms */}
+                <section className="mt-12">
+                    <h2 className="text-2xl font-bold mb-4">Rooms Near You</h2>
+                    {geoStatus === "idle" && <p className="text-sm text-slate-500">Requesting location…</p>}
+                    {geoStatus === "locating" && <p className="text-sm text-slate-500">Locating you…</p>}
+                    {geoStatus === "unsupported" && (
+                        <p className="text-sm text-red-600">Location services not supported by this browser.</p>
+                    )}
+                    {geoStatus === "denied" && (
+                        <div className="space-y-2">
+                            <p className="text-sm text-red-600">Location permission denied.</p>
+                            <button onClick={requestGeolocation} className="bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 px-5 rounded-xl text-sm font-bold transition-all">
+                                Enable Location
+                            </button>
+                        </div>
+                    )}
+                    {geoStatus === "error" && (
+                        <div className="space-y-2">
+                            <p className="text-sm text-red-600">{geoError}</p>
+                            <button onClick={requestGeolocation} className="bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 px-5 rounded-xl text-sm font-bold transition-all">
+                                Try Again
+                            </button>
+                        </div>
+                    )}
+                    {geoStatus === "granted" && (
+                        <>
+                            {nearby?.isPending && <p className="text-sm text-slate-500">Loading nearby rooms…</p>}
+                            {nearby?.isError && (
+                                <div className="space-y-2">
+                                    <p className="text-sm text-red-600">Failed to load nearby rooms.</p>
+                                    <button onClick={() => nearby.refetch()} className="bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 px-5 rounded-xl text-sm font-bold transition-all">
+                                        Try Again
+                                    </button>
+                                </div>
+                            )}
+                            {nearby?.data && nearby.data.length === 0 && (
+                                <p className="text-sm text-slate-500">No nearby rooms found.</p>
+                            )}
+                            {nearby?.data && nearby.data.length > 0 && (
+                                <Card rooms={nearby.data as any} favorites={favorites} toggleFavorite={toggleFavorite} />
+                            )}
+                        </>
+                    )}
+                </section>
+
+                {/* More Rooms */}
+                <section className="mt-12 mb-12">
+                    <h2 className="text-2xl font-bold mb-4">More Rooms</h2>
+                    {randomRooms.length === 0 ? (
+                        <p className="text-sm text-slate-500">No additional rooms to display.</p>
+                    ) : (
+                        <Card rooms={randomRooms} favorites={favorites} toggleFavorite={toggleFavorite} />
+                    )}
+                </section>
+            </>
             {/* FIXED GLOBAL FAB FILTER CONTROL */}
             <button className="fixed bottom-6 right-6 w-12 h-12 bg-indigo-600 text-white rounded-full shadow-lg shadow-indigo-300 flex items-center justify-center hover:bg-indigo-700 transition-all z-40 hover:scale-105 active:scale-95">
                 <SlidersHorizontal className="w-5 h-5" />
