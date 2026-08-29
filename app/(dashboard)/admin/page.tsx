@@ -660,36 +660,45 @@ export default function AdminDashboardPage() {
                         <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-3">
                             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Submitted Documents</span>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                {selectedKycModal.frontImageUrl && (
-                                    <a
-                                        href={selectedKycModal.frontImageUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between text-xs font-semibold text-indigo-600 hover:underline"
-                                    >
-                                        Front Document <ExternalLink className="w-3.5 h-3.5" />
-                                    </a>
-                                )}
-                                {selectedKycModal.backImageUrl && (
-                                    <a
-                                        href={selectedKycModal.backImageUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between text-xs font-semibold text-indigo-600 hover:underline"
-                                    >
-                                        Back Document <ExternalLink className="w-3.5 h-3.5" />
-                                    </a>
-                                )}
-                                {selectedKycModal.selfieUrl && (
-                                    <a
-                                        href={selectedKycModal.selfieUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between text-xs font-semibold text-indigo-600 hover:underline"
-                                    >
-                                        Selfie Verification <ExternalLink className="w-3.5 h-3.5" />
-                                    </a>
-                                )}
+{selectedKycModal.frontImageUrl && (
+                        <div className="flex flex-col items-center">
+                            <a
+                                href={selectedKycModal.frontImageUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between text-xs font-semibold text-indigo-600 hover:underline"
+                            >
+                                Front Document <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                            <img src={selectedKycModal.frontImageUrl} alt="Front Document" className="mt-2 max-w-full h-auto rounded border" />
+                        </div>
+                    )}
+{selectedKycModal.backImageUrl && (
+                        <div className="flex flex-col items-center">
+                            <a
+                                href={selectedKycModal.backImageUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between text-xs font-semibold text-indigo-600 hover:underline"
+                            >
+                                Back Document <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                            <img src={selectedKycModal.backImageUrl} alt="Back Document" className="mt-2 max-w-full h-auto rounded border" />
+                        </div>
+                    )}
+{selectedKycModal.selfieUrl && (
+                        <div className="flex flex-col items-center">
+                            <a
+                                href={selectedKycModal.selfieUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between text-xs font-semibold text-indigo-600 hover:underline"
+                            >
+                                Selfie Verification <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                            <img src={selectedKycModal.selfieUrl} alt="Selfie Verification" className="mt-2 max-w-full h-auto rounded border" />
+                        </div>
+                    )}
                             </div>
                         </div>
 
