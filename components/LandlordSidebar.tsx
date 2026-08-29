@@ -55,7 +55,7 @@ export default function LandlordSidebar({ className = "", collapsed, setCollapse
         },
         { label: "Schedules", icon: Calendar, href: "/landlord/schedules" },
         { label: "Featured", icon: Sparkles, href: "/landlord/featured" },
-        { label: "Settings", icon: Settings, href: "/profile" },
+        { label: "Settings", icon: Settings, href: "/settings" },
     ];
 
     // Accurate sub-route and strict match evaluator
