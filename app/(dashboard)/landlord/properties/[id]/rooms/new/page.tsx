@@ -211,7 +211,7 @@ export default function NewRoomPage() {
             <div className="mx-auto flex max-w-6xl flex-col gap-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <Link href={`/dashboard/landlord/properties/${propertyId}`} className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700">
+                        <Link href={`/landlord/properties/${propertyId}`} className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700">
                             <ArrowLeft className="h-4 w-4" />
                             Back to property
                         </Link>

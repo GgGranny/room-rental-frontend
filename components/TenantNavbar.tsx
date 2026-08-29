@@ -23,7 +23,7 @@ export default function TenantNavbar() {
             {/* <ThemeToggle /> */}
             <div className="flex items-center gap-12 flex-1">
                 {/* Logo */}
-                <button onClick={() => router.push("/home")} className="text-xl font-bold text-indigo-600 tracking-tight dark:text-indigo-400">RoomEase</button>
+                <button onClick={() => router.push("/home")} className="text-xl font-bold text-indigo-600 tracking-tight dark:text-indigo-400">Basai</button>
 
                 {/* Search Bar Container */}
                 <div className="relative w-full max-w-md hidden md:block">

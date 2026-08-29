@@ -24,7 +24,7 @@ export default function LandlordNavbar() {
         <nav className="w-full bg-white border-b border-slate-100 px-6 py-3.5 fixed top-0 z-50 flex items-center justify-between shadow-sm shadow-slate-100/40 dark:bg-slate-900 dark:border-slate-700/50 dark:shadow-slate-900/20">
             <div className="flex items-center gap-12 flex-1">
                 {/* Logo */}
-                <button onClick={() => router.push("/landlord")} className="text-xl font-bold text-indigo-600 tracking-tight dark:text-indigo-400">RoomEase</button>
+                <button onClick={() => router.push("/landlord")} className="text-xl font-bold text-indigo-600 tracking-tight dark:text-indigo-400">Basai</button>
             </div>
 
             {/* Mid & Right Nav elements */}
