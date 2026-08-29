@@ -15,6 +15,7 @@ export default function ProfileDropdown() {
     const menuRef = useRef<HTMLDivElement>(null);
     const { data } = useMyProfile();
     const profile = data?.data;
+    const role = profile?.role;
     const fullName = [profile?.fname, profile?.lname].filter(Boolean).join(" ") || "Your account";
     const initials =
         [profile?.fname?.[0], profile?.lname?.[0]].filter(Boolean).join("").toUpperCase() || "U";
@@ -104,13 +105,15 @@ export default function ProfileDropdown() {
                         >
                             <Settings className="w-3.5 h-3.5 text-slate-400" /> Settings
                         </button>
-                        <button
-                            role="menuitem"
-                            onClick={() => go("/settings/kyc")}
-                            className="w-full text-left px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2"
-                        >
-                            <ShieldCheck className="w-3.5 h-3.5 text-slate-400" /> My KYC
-                        </button>
+                        {role !== "ROLE_ADMIN" && (
+                            <button
+                                role="menuitem"
+                                onClick={() => go(role === "ROLE_LANDLORD" ? "/landlord/kyc" : "/settings/kyc")}
+                                className="w-full text-left px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2"
+                            >
+                                <ShieldCheck className="w-3.5 h-3.5 text-slate-400" /> My KYC
+                            </button>
+                        )}
                         <div className="border-t border-slate-100 dark:border-slate-800">
                             <LogoutButton
                                 label="Sign Out"

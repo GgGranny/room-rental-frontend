@@ -41,7 +41,11 @@ export function useCompleteProfile() {
         mutationFn: (body: CompleteProfileType) => authService.completeProfile(body),
         onSuccess: (data) => {
             console.log("Profile completion successful:", data);
+            // Invalidate profile completion and current user queries
             queryClient.invalidateQueries({ queryKey: [AUTH_KEY] })
+            queryClient.invalidateQueries({ queryKey: [CURRENT_USER] })
+            // Optimistically mark profile as complete to avoid stale false from cache
+            queryClient.setQueryData([AUTH_KEY], { data: { isCompleted: true } })
         }
     });
 }
